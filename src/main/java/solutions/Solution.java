@@ -15,7 +15,7 @@ public class Solution {
     public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
 
-        List<String> lines = Files.readAllLines(Paths.get("inputs/dayXinput.txt"));
+        List<String> lines = Files.readAllLines(Paths.get("inputs/dayX.txt"));
         System.out.println(solution.getSolution(lines));
     }
 }
