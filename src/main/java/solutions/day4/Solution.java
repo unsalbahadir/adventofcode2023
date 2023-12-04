@@ -1,0 +1,67 @@
+package solutions.day4;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class Solution {
+
+    public int getSolution(List<String> lines) {
+        int totalScore = 0;
+
+        for (String line : lines) {
+            String card = StringUtils.substringAfter(line, ": ");
+            int score = calculateCardPoints(card);
+            totalScore += score;
+        }
+
+        return totalScore;
+    }
+
+    // "41 48 83 86 17 | 83 86  6 31 17  9 48 53"
+    private int calculateCardPoints(String card) {
+        int score = 0;
+
+        String winningNumbersString = StringUtils.substringBefore(card, " |"); // "41 48 83 86 17"
+        String numbersPresentString = StringUtils.substringAfter(card, "| "); // "83 86  6 31 17  9 48 53"
+
+        Set<Integer> winningNumbers = new HashSet<>();
+        String[] winningNumbersSplit = winningNumbersString.split(" ");
+        for (String s : winningNumbersSplit) {
+            if (s.isBlank()) {
+                continue;
+            }
+            winningNumbers.add(Integer.parseInt(s.trim()));
+        }
+
+        String[] numbersPresentSplit = numbersPresentString.split(" ");
+        for (String s : numbersPresentSplit) {
+            if (s.isBlank()) {
+                continue;
+            }
+            int number = Integer.parseInt(s.trim());
+            if (winningNumbers.contains(number)) {
+                if (score == 0) {
+                    score++;
+                } else {
+                    score *= 2;
+                }
+            }
+        }
+
+        return score;
+    }
+
+    public static void main(String[] args) throws IOException {
+        Solution solution = new Solution();
+
+        List<String> lines = Files.readAllLines(Paths.get("inputs/day4.txt"));
+        System.out.println(solution.getSolution(lines));
+    }
+}
