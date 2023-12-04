@@ -14,45 +14,12 @@ public class Solution {
 
         for (String line : lines) {
             String card = StringUtils.substringAfter(line, ": ");
-            int score = calculateCardPoints(card);
+            int matchCount = countMatchingNumbers(card);
+            int score = (int) Math.pow(2, matchCount - 1);
             totalScore += score;
         }
 
         return totalScore;
-    }
-
-    // "41 48 83 86 17 | 83 86  6 31 17  9 48 53"
-    private int calculateCardPoints(String card) {
-        int score = 0;
-
-        String winningNumbersString = StringUtils.substringBefore(card, " |"); // "41 48 83 86 17"
-        String numbersPresentString = StringUtils.substringAfter(card, "| "); // "83 86  6 31 17  9 48 53"
-
-        Set<Integer> winningNumbers = new HashSet<>();
-        String[] winningNumbersSplit = winningNumbersString.split(" ");
-        for (String s : winningNumbersSplit) {
-            if (s.isBlank()) {
-                continue;
-            }
-            winningNumbers.add(Integer.parseInt(s.trim()));
-        }
-
-        String[] numbersPresentSplit = numbersPresentString.split(" ");
-        for (String s : numbersPresentSplit) {
-            if (s.isBlank()) {
-                continue;
-            }
-            int number = Integer.parseInt(s.trim());
-            if (winningNumbers.contains(number)) {
-                if (score == 0) {
-                    score++;
-                } else {
-                    score *= 2;
-                }
-            }
-        }
-
-        return score;
     }
 
     public int getSolution2(List<String> lines) {
