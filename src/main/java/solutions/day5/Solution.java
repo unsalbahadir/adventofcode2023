@@ -4,6 +4,7 @@ import org.apache.commons.lang3.NumberRange;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.print.attribute.standard.Destination;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -19,6 +20,7 @@ public class Solution {
     private final TreeMap<Long, Destination> temperatureToHumidityMap = new TreeMap<>();
     private final TreeMap<Long, Destination> humidityToLocationMap = new TreeMap<>();
 
+    record Seed(long start, long range){}
     record Destination(long start, long increment){}
 
     public long getSolution(List<String> lines) {
@@ -27,6 +29,21 @@ public class Solution {
         fillMaps(lines);
 
         return findMinLocation(seeds);
+    }
+
+    public long getSolution2(List<String> lines) {
+        String[] seedsAsString = StringUtils.substringAfter(lines.getFirst(), ": ").split(" ");
+        List<Seed> seeds = new ArrayList<>();
+        for (int i = 0; i < seedsAsString.length; i+=2) {
+            long start = Long.parseLong(seedsAsString[i]);
+            long range = Long.parseLong(seedsAsString[i + 1]);
+            Seed seed = new Seed(start, range);
+            seeds.add(seed);
+        }
+
+        fillMaps(lines);
+
+        return findMinLocation2(seeds);
     }
 
     private void fillMaps(List<String> lines) {
@@ -82,6 +99,26 @@ public class Solution {
         return minLocation;
     }
 
+    private long findMinLocation2(List<Seed> seeds) {
+        long minLocation = Long.MAX_VALUE;
+
+        for (Seed seed : seeds) {
+            for (long i = 0; i < seed.range; i++) {
+                Long soil = getFromMap(seedToSoilMap, seed.start + i);
+                Long fertilizer = getFromMap(soilToFertilizerMap, soil);
+                Long water = getFromMap(fertilizerToWaterMap, fertilizer);
+                Long light = getFromMap(waterToLightMap, water);
+                Long temperature = getFromMap(lightToTemperatureMap, light);
+                Long humidity = getFromMap(temperatureToHumidityMap, temperature);
+                Long location = getFromMap(humidityToLocationMap, humidity);
+
+                minLocation = Math.min(minLocation, location);
+            }
+        }
+
+        return minLocation;
+    }
+
     private Long getFromMap(TreeMap<Long, Destination> map, Long key) {
         Long result = key;
         Map.Entry<Long, Destination> entry = map.floorEntry(key);
@@ -103,5 +140,6 @@ public class Solution {
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day5.txt"));
         System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
     }
 }
