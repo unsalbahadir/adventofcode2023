@@ -13,31 +13,36 @@ public class Solution {
     private record Race(long time, long distance){}
 
     public int getSolution(List<String> lines) {
-        int result = 1;
+        List<String> times = getTimes(lines);
+        List<String> distances = getDistances(lines);
 
-        String[] timesArray = StringUtils.substringAfter(lines.getFirst(), "Time:      ").split(" ");
-        String[] distancesArray = StringUtils.substringAfter(lines.getLast(), "Distance:  ").split(" ");
-        List<String> times = getWithoutEmptyStrings(timesArray);
-        List<String> distances = getWithoutEmptyStrings(distancesArray);
+        int result = 1;
         for (int i = 0; i < times.size(); i++) {
             Race race = new Race(Integer.parseInt(times.get(i)), Integer.parseInt(distances.get(i)));
             int numberOfWaysToWinRace = getNumberOfWaysToWinRace(race);
             result *= numberOfWaysToWinRace;
         }
-
         return result;
     }
 
     public int getSolution2(List<String> lines) {
-        String[] timesArray = StringUtils.substringAfter(lines.getFirst(), "Time:      ").split(" ");
-        String[] distancesArray = StringUtils.substringAfter(lines.getLast(), "Distance:  ").split(" ");
-        List<String> times = getWithoutEmptyStrings(timesArray);
-        List<String> distances = getWithoutEmptyStrings(distancesArray);
+        List<String> times = getTimes(lines);
+        List<String> distances = getDistances(lines);
 
         long time = Long.parseLong(String.join("", times));
         long distance = Long.parseLong(String.join("", distances));
         Race race = new Race(time, distance);
         return getNumberOfWaysToWinRace(race);
+    }
+
+    private List<String> getTimes(List<String> lines) {
+        String[] timesArray = StringUtils.substringAfter(lines.getFirst(), "Time:      ").split(" ");
+        return getWithoutEmptyStrings(timesArray);
+    }
+
+    private List<String> getDistances(List<String> lines) {
+        String[] distancesArray = StringUtils.substringAfter(lines.getLast(), "Distance:  ").split(" ");
+        return getWithoutEmptyStrings(distancesArray);
     }
 
     private List<String> getWithoutEmptyStrings(String[] strings) {
