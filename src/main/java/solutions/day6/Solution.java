@@ -10,7 +10,7 @@ import java.util.List;
 
 public class Solution {
 
-    private record Race(int time, int distance){}
+    private record Race(long time, long distance){}
 
     public int getSolution(List<String> lines) {
         int result = 1;
@@ -28,6 +28,18 @@ public class Solution {
         return result;
     }
 
+    public int getSolution2(List<String> lines) {
+        String[] timesArray = StringUtils.substringAfter(lines.getFirst(), "Time:      ").split(" ");
+        String[] distancesArray = StringUtils.substringAfter(lines.getLast(), "Distance:  ").split(" ");
+        List<String> times = getWithoutEmptyStrings(timesArray);
+        List<String> distances = getWithoutEmptyStrings(distancesArray);
+
+        long time = Long.parseLong(String.join("", times));
+        long distance = Long.parseLong(String.join("", distances));
+        Race race = new Race(time, distance);
+        return getNumberOfWaysToWinRace(race);
+    }
+
     private List<String> getWithoutEmptyStrings(String[] strings) {
         return Arrays.stream(strings)
                 .filter(s -> !s.isBlank())
@@ -36,9 +48,9 @@ public class Solution {
 
     private int getNumberOfWaysToWinRace(Race race) {
         int numberOfWays = 0;
-        for (int numberOfSecondsToHoldButton = 0; numberOfSecondsToHoldButton <= race.time; numberOfSecondsToHoldButton++) {
-            int travelTime = race.time - numberOfSecondsToHoldButton;
-            int distanceTravelled = numberOfSecondsToHoldButton * travelTime;
+        for (long numberOfSecondsToHoldButton = 0; numberOfSecondsToHoldButton <= race.time; numberOfSecondsToHoldButton++) {
+            long travelTime = race.time - numberOfSecondsToHoldButton;
+            long distanceTravelled = numberOfSecondsToHoldButton * travelTime;
             if (distanceTravelled > race.distance) {
                 numberOfWays++;
             }
@@ -51,5 +63,6 @@ public class Solution {
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day6.txt"));
         System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
     }
 }
