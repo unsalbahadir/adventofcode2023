@@ -47,11 +47,12 @@ public class Solution {
 
     public int getSolution(List<String> lines) {
         String commands = lines.getFirst();
-        Node firstNode = buildNodes(lines.subList(2, lines.size()));
+        Map<String, Node> nodeMap = buildNodes(lines.subList(2, lines.size()));
+        Node firstNode = nodeMap.get("AAA");
         return navigate(commands, firstNode);
     }
 
-    private Node buildNodes(List<String> lines) {
+    private Map<String, Node> buildNodes(List<String> lines) {
         Map<String, Node> nodeMap = new HashMap<>();
         for (String line : lines) {
             String[] split = line.split(" = ");
@@ -67,7 +68,7 @@ public class Solution {
             node.right = right;
         }
 
-        return nodeMap.get("AAA");
+        return nodeMap;
     }
 
     private Node getNode(Map<String, Node> nodeMap, String element) {
@@ -99,10 +100,58 @@ public class Solution {
         return steps;
     }
 
+    public long getSolution2(List<String> lines) {
+        String commands = lines.getFirst();
+        Map<String, Node> nodeMap = buildNodes(lines.subList(2, lines.size()));
+        List<Node> startingNodes = nodeMap.entrySet().stream()
+                .filter(entry -> entry.getKey().endsWith("A"))
+                .map(Map.Entry::getValue)
+                .toList();
+        List<Long> results = startingNodes.parallelStream()
+                .map(node -> (long) navigate2(commands, node))
+                .toList();
+        return results.stream().reduce(this::lcm).orElse(0L);
+    }
+
+    private int navigate2(String commands, Node currentNode) {
+        int steps = 0;
+        int commandIndex = 0;
+
+        while (!currentNode.element.endsWith("Z")) {
+            char c = commands.charAt(commandIndex);
+            if (c == 'L') {
+                currentNode = currentNode.left;
+            } else {
+                currentNode = currentNode.right;
+            }
+            commandIndex++;
+            if (commandIndex >= commands.length()) {
+                commandIndex = 0;
+            }
+            steps++;
+        }
+        return steps;
+    }
+
+    private long lcm(long number1, long number2) {
+        long gcd = gcd(number1, number2);
+        return (number1 * number2) / gcd;
+    }
+
+    private long gcd(long number1, long number2) {
+        if (number1 == 0 || number2 == 0) {
+            return number1 + number2;
+        }
+        long biggerNumber = Math.max(number1, number2);
+        long smallerNumber = Math.min(number1, number2);
+        return gcd(biggerNumber % smallerNumber, smallerNumber);
+    }
+
     public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day8.txt"));
-        System.out.println(solution.getSolution(lines));
+//        System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
     }
 }
