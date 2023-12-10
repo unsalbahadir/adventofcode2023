@@ -198,14 +198,12 @@ public class Solution {
         Position startingPosition = getStartingPosition(board);
         List<Position> loop = findLoop(board, startingPosition);
 
-//        System.out.println(loop);
-
         replaceStartingPositionCharacter(board, loop);
 
         int maxRow = lines.size();
         int maxColumn = lines.getFirst().length();
         List<Position> positionsEnclosedByLoop = findPositionsEnclosedByLoop(board, loop, maxRow, maxColumn);
-        System.out.println(positionsEnclosedByLoop);
+//        System.out.println(positionsEnclosedByLoop);
         return positionsEnclosedByLoop.size();
     }
 
@@ -213,9 +211,6 @@ public class Solution {
         Position startingPosition = loop.getFirst();
         Position position1 = loop.get(1);
         Position position2 = loop.getLast();
-
-//        System.out.println("position1: " + position1);
-//        System.out.println("position2: " + position2);
 
         Pipe startingPositionCharacter;
         if (position1.row == position2.row) {
@@ -240,17 +235,13 @@ public class Solution {
             }
         }
 
-        System.out.println("Starting position character: " + startingPositionCharacter.character);
+//        System.out.println("Starting position character: " + startingPositionCharacter.character);
         board.characters.put(startingPosition, startingPositionCharacter.character);
     }
 
     private List<Position> findPositionsEnclosedByLoop(Board board, List<Position> loop, int maxRow, int maxColumn) {
         Set<Position> loopPositions = new HashSet<>(loop);
-
         List<Position> enclosedPositions = new ArrayList<>();
-
-        Position encounteredLoopStart = null;
-        Position encounteredLoopEnd = null;
 
         boolean insideLoop = false;
         for (int row = 1; row <= maxRow; row++) {
@@ -258,11 +249,6 @@ public class Solution {
                 Position position = new Position(row, column);
                 if (loopPositions.contains(position)) {
                     if (board.characters.get(position) == '|') {
-//                        if (encounteredLoopEnd != null) {
-//                            insideLoop = handleLoopEncounterEnd(board, encounteredLoopStart, encounteredLoopEnd, insideLoop);
-//                            encounteredLoopStart = null;
-//                            encounteredLoopEnd = null;
-//                        }
                         insideLoop = !insideLoop;
                     } else {
                         Position startOfBend = position;
@@ -275,19 +261,8 @@ public class Solution {
                         Position endOfBend = new Position(row, column);
 
                         insideLoop = handleLoopEncounterEnd(board, startOfBend, endOfBend, insideLoop);
-
-//                        if (encounteredLoopStart == null) {
-//                            encounteredLoopStart = position;
-//                        }
-//                        encounteredLoopEnd = position;
                     }
                 } else {
-//                    if (encounteredLoopEnd != null) {
-//                        // finished iterating over loop positions
-//                        insideLoop = handleLoopEncounterEnd(board, encounteredLoopStart, encounteredLoopEnd, insideLoop);
-//                        encounteredLoopStart = null;
-//                        encounteredLoopEnd = null;
-//                    }
                     if (insideLoop) {
                         enclosedPositions.add(position);
                     }
