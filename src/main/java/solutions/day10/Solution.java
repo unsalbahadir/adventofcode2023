@@ -100,6 +100,7 @@ public class Solution {
 //            System.out.println("CurrentPosition: " + currentPosition + "(" + board.characters.get(currentPosition) + ")" + ", PreviousPosition: " + previousPosition);
             loop.add(currentPosition);
         }
+        loop.removeLast();
 
         return loop;
     }
@@ -192,10 +193,136 @@ public class Solution {
         };
     }
 
+    public int getSolution2(List<String> lines) {
+        Board board = convertToBoard(lines);
+        Position startingPosition = getStartingPosition(board);
+        List<Position> loop = findLoop(board, startingPosition);
+
+//        System.out.println(loop);
+
+        replaceStartingPositionCharacter(board, loop);
+
+        int maxRow = lines.size();
+        int maxColumn = lines.getFirst().length();
+        List<Position> positionsEnclosedByLoop = findPositionsEnclosedByLoop(board, loop, maxRow, maxColumn);
+        System.out.println(positionsEnclosedByLoop);
+        return positionsEnclosedByLoop.size();
+    }
+
+    private void replaceStartingPositionCharacter(Board board, List<Position> loop) {
+        Position startingPosition = loop.getFirst();
+        Position position1 = loop.get(1);
+        Position position2 = loop.getLast();
+
+//        System.out.println("position1: " + position1);
+//        System.out.println("position2: " + position2);
+
+        Pipe startingPositionCharacter;
+        if (position1.row == position2.row) {
+            startingPositionCharacter = Pipe.EW;
+        } else if (position1.column == position2.column) {
+            startingPositionCharacter = Pipe.NS;
+        } else {
+            Position positionOnSameRow = position1.row == startingPosition.row ? position1 : position2;
+            Position positionOnSameColumn = position1.column == startingPosition.column ? position1 : position2;
+            if (positionOnSameRow.row < positionOnSameColumn.row) {
+                if (positionOnSameRow.column < positionOnSameColumn.column) {
+                    startingPositionCharacter = Pipe.SW;
+                } else {
+                    startingPositionCharacter = Pipe.SE;
+                }
+            } else {
+                if (positionOnSameRow.column < positionOnSameColumn.column) {
+                    startingPositionCharacter = Pipe.NE;
+                } else {
+                    startingPositionCharacter = Pipe.NW;
+                }
+            }
+        }
+
+        System.out.println("Starting position character: " + startingPositionCharacter.character);
+        board.characters.put(startingPosition, startingPositionCharacter.character);
+    }
+
+    private List<Position> findPositionsEnclosedByLoop(Board board, List<Position> loop, int maxRow, int maxColumn) {
+        Set<Position> loopPositions = new HashSet<>(loop);
+
+        List<Position> enclosedPositions = new ArrayList<>();
+
+        Position encounteredLoopStart = null;
+        Position encounteredLoopEnd = null;
+
+        boolean insideLoop = false;
+        for (int row = 1; row <= maxRow; row++) {
+            for (int column = 1; column <= maxColumn; column++) {
+                Position position = new Position(row, column);
+                if (loopPositions.contains(position)) {
+                    if (board.characters.get(position) == '|') {
+//                        if (encounteredLoopEnd != null) {
+//                            insideLoop = handleLoopEncounterEnd(board, encounteredLoopStart, encounteredLoopEnd, insideLoop);
+//                            encounteredLoopStart = null;
+//                            encounteredLoopEnd = null;
+//                        }
+                        insideLoop = !insideLoop;
+                    } else {
+                        Position startOfBend = position;
+                        column++;
+                        position = new Position(row, column);
+                        while (board.characters.get(position) == '-') {
+                            column++;
+                            position = new Position(row, column);
+                        }
+                        Position endOfBend = new Position(row, column);
+
+                        insideLoop = handleLoopEncounterEnd(board, startOfBend, endOfBend, insideLoop);
+
+//                        if (encounteredLoopStart == null) {
+//                            encounteredLoopStart = position;
+//                        }
+//                        encounteredLoopEnd = position;
+                    }
+                } else {
+//                    if (encounteredLoopEnd != null) {
+//                        // finished iterating over loop positions
+//                        insideLoop = handleLoopEncounterEnd(board, encounteredLoopStart, encounteredLoopEnd, insideLoop);
+//                        encounteredLoopStart = null;
+//                        encounteredLoopEnd = null;
+//                    }
+                    if (insideLoop) {
+                        enclosedPositions.add(position);
+                    }
+                }
+            }
+        }
+        return enclosedPositions;
+    }
+
+    private boolean handleLoopEncounterEnd(Board board, Position encounteredLoopStart, Position encounteredLoopEnd, boolean insideLoop) {
+        Character startCharacter = board.characters.get(encounteredLoopStart);
+        Character endCharacter = board.characters.get(encounteredLoopEnd);
+        if (startCharacter == Pipe.NE.character && endCharacter == Pipe.NW.character) {
+            // passes through
+        } else if (startCharacter == Pipe.SE.character && endCharacter == Pipe.SW.character) {
+            // passes through
+        } else if (startCharacter == Pipe.NE.character && endCharacter == Pipe.SW.character) {
+            // cannot pass
+            insideLoop = !insideLoop;
+        } else if (startCharacter == Pipe.SE.character && endCharacter == Pipe.NW.character) {
+            // cannot pass
+            insideLoop = !insideLoop;
+        } else {
+            // should not happen?
+            System.out.println("Should not happen. StartingPosition:" + encounteredLoopStart + "(" + startCharacter + ") " +
+                    "EndPosition: " + encounteredLoopEnd + "(" + endCharacter + ")");
+        }
+        return insideLoop;
+    }
+
     public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day10.txt"));
-        System.out.println(solution.getSolution(lines));
+//        System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
     }
 }
