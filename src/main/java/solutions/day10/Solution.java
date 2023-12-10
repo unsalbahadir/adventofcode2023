@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Solution {
 
@@ -15,6 +17,7 @@ public class Solution {
         W,
         S
     }
+
     private static final Map<Direction, Direction> reverseDirections = Map.of(
             Direction.N, Direction.S,
             Direction.E, Direction.W,
@@ -41,9 +44,12 @@ public class Solution {
         }
     }
 
-    private record Board(Set<Position> positions, Map<Position, Character> characters) {}
+    private record Board(Set<Position> positions, Map<Position, Character> characters) {
+    }
 
-    private record Position(int row, int column){}
+    private record Position(int row, int column) {
+    }
+
     public int getSolution(List<String> lines) {
         Board board = convertToBoard(lines);
         Position startingPosition = getStartingPosition(board);
@@ -80,61 +86,49 @@ public class Solution {
         Direction directionComingFrom = null;
         boolean firstIteration = true;
         while (firstIteration || !currentPosition.equals(startingPosition)) {
+            Pair<Position, Direction> nextPositionAndDirection;
+            Position previousPosition = null;
             if (firstIteration) {
-                Map.Entry<Direction, Position> connectingPipe = findConnectingPipe(board, null, currentPosition);
-                currentPosition = connectingPipe.getValue();
-                loop.add(currentPosition);
-                directionComingFrom = connectingPipe.getKey();
+                nextPositionAndDirection = getFirstPipe(board, currentPosition);
                 firstIteration = false;
-                continue;
+            } else {
+                nextPositionAndDirection = getNextPosition(board, currentPosition, directionComingFrom);
+                previousPosition = loop.get(loop.size() - 2);
             }
-            Position previousPosition = loop.get(loop.size() - 2);
-//            currentPosition = findConnectingPipe(board, previousPosition, currentPosition);
-            Pair<Position, Direction> nextPositionAndDirection = getNextPosition(board, currentPosition, directionComingFrom);
             currentPosition = nextPositionAndDirection.getLeft();
             directionComingFrom = reverseDirections.get(nextPositionAndDirection.getRight());
-            System.out.println("CurrentPosition: " + currentPosition + "(" + board.characters.get(currentPosition) + ")" + ", PreviousPosition: " + previousPosition);
+//            System.out.println("CurrentPosition: " + currentPosition + "(" + board.characters.get(currentPosition) + ")" + ", PreviousPosition: " + previousPosition);
             loop.add(currentPosition);
         }
 
         return loop;
     }
 
-    private Map.Entry<Direction, Position> findConnectingPipe(Board board, Position previousPosition, Position currentPosition) {
-        Map<Direction, Position> positionByDirection = getAdjacentPositions(board.positions, currentPosition);
-        for (Map.Entry<Direction, Position> entry : positionByDirection.entrySet()) {
+    private Pair<Position, Direction> getFirstPipe(Board board, Position currentPosition) {
+        Map<Direction, Position> positionInDirection = getAdjacentPositions(currentPosition);
+        for (Map.Entry<Direction, Position> entry : positionInDirection.entrySet()) {
+            Direction direction = entry.getKey();
             Position pipePosition = entry.getValue();
-            if (!board.positions.contains(pipePosition) || pipePosition.equals(previousPosition)) {
-                continue;
-            }
             Character character = board.characters.get(pipePosition);
             if (character == '.') {
                 continue;
             }
-            switch (entry.getKey()) {
-                case N -> {
-                    if (character == Pipe.NS.character || character == Pipe.SE.character || character == Pipe.SW.character) {
-                        return new AbstractMap.SimpleEntry<>(Direction.S, pipePosition);
-                    }
-                }
-                case E -> {
-                    if (character == Pipe.EW.character || character == Pipe.SW.character || character == Pipe.NW.character) {
-                        return new AbstractMap.SimpleEntry<>(Direction.W, pipePosition);
-                    }
-                }
-                case W -> {
-                    if (character == Pipe.EW.character || character == Pipe.SE.character || character == Pipe.NE.character) {
-                        return new AbstractMap.SimpleEntry<>(Direction.E, pipePosition);
-                    }
-                }
-                case S -> {
-                    if (character == Pipe.NS.character || character == Pipe.NE.character || character == Pipe.NW.character) {
-                        return new AbstractMap.SimpleEntry<>(Direction.N, pipePosition);
-                    }
-                }
+            boolean isValid = switch (direction) {
+                case N -> Stream.of(Pipe.NS, Pipe.SE, Pipe.SW).anyMatch(pipe -> character == pipe.character);
+                case E -> Stream.of(Pipe.EW, Pipe.SW, Pipe.NW).anyMatch(pipe -> character == pipe.character);
+                case W -> Stream.of(Pipe.EW, Pipe.SE, Pipe.NE).anyMatch(pipe -> character == pipe.character);
+                case S -> Stream.of(Pipe.NS, Pipe.NE, Pipe.NW).anyMatch(pipe -> character == pipe.character);
+            };
+            if (isValid) {
+                return Pair.of(pipePosition, direction);
             }
         }
         return null;
+    }
+
+    private Map<Direction, Position> getAdjacentPositions(Position position) {
+        return Arrays.stream(Direction.values())
+                .collect(Collectors.toMap(direction -> direction, direction -> getPositionInDirection(position, direction)));
     }
 
     private Pair<Position, Direction> getNextPosition(Board board, Position position, Direction directionComingFrom) {
@@ -197,18 +191,6 @@ public class Solution {
             case S -> new Position(position.row + 1, position.column);
         };
     }
-
-    private Map<Direction, Position> getAdjacentPositions(Set<Position> positions, Position position) {
-        Map<Direction, Position> positionByDirection = new EnumMap<>(Direction.class);
-        positionByDirection.put(Direction.N, new Position(position.row - 1, position.column));
-        positionByDirection.put(Direction.E, new Position(position.row, position.column + 1));
-        positionByDirection.put(Direction.W, new Position(position.row, position.column - 1));
-        positionByDirection.put(Direction.S, new Position(position.row + 1, position.column));
-
-        return positionByDirection;
-    }
-
-
 
     public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
