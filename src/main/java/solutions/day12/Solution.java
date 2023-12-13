@@ -3,51 +3,45 @@ package solutions.day12;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Solution {
 
     public long getSolution(List<String> lines) {
-        long possibleArrangementCount = 0;
+        long result = 0;
 
         for (String line : lines) {
-            String[] split = line.split(" ");
-            String springs = split[0];
-            List<Integer> damagedSpringGroups = Arrays.stream(split[1].split(","))
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-//            List<String> possibleArrangements = getPossibleArrangements(springs, damagedSpringGroups);
-//            System.out.println("Possible arrangements size: " + possibleArrangements.size());
-//            possibleArrangementCount += possibleArrangements.size();
-            long count = countArrangements(new HashMap<>(), springs, damagedSpringGroups, 0);
-//            System.out.println("Count for " + line + ": " + count);
-            possibleArrangementCount += count;
+            long possibleArrangementCount = getPossibleArrangementCount(line);
+            result += possibleArrangementCount;
         }
-
-        return possibleArrangementCount;
+        return result;
     }
 
     public long getSolution2(List<String> lines) {
-        long possibleArrangementCount = 0;
+        long result = 0;
 
         for (String line : lines) {
             line = unfold(line);
-            String[] split = line.split(" ");
-            String springs = split[0];
-            List<Integer> damagedSpringGroups = Arrays.stream(split[1].split(","))
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-//            List<String> possibleArrangements = getPossibleArrangements(springs, damagedSpringGroups);
-//            System.out.println("Possible arrangements size: " + possibleArrangements.size());
-//            possibleArrangementCount += possibleArrangements.size();
-            long count = countArrangements(new HashMap<>(), springs, damagedSpringGroups, 0);
-            System.out.println("Count for " + line + ": " + count);
-            possibleArrangementCount += count;
+            long possibleArrangementCount = getPossibleArrangementCount(line);
+            result += possibleArrangementCount;
         }
+        return result;
+    }
 
-        return possibleArrangementCount;
+    private long getPossibleArrangementCount(String line) {
+        String[] split = line.split(" ");
+        String springs = split[0];
+        List<Integer> damagedSpringGroups = Arrays.stream(split[1].split(","))
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+        long count = countArrangements(new HashMap<>(), springs, damagedSpringGroups, 0);
+        System.out.println("Count for " + line + ": " + count);
+        return count;
     }
 
     private String unfold(String line) {
@@ -68,13 +62,6 @@ public class Solution {
 
 //        System.out.println("Unfolded: " + result);
         return result.toString();
-    }
-
-    private List<String> getPossibleArrangements(String springs, List<Integer> damagedSpringGroups) {
-        List<String> possibleArrangements = new ArrayList<>();
-        tryPossibleArrangements(springs, damagedSpringGroups, possibleArrangements);
-
-        return possibleArrangements;
     }
 
     private long countArrangements(Map<String, Long> results, String springs, List<Integer> damagedSpringGroups, int currentGroupLength) {
@@ -106,102 +93,40 @@ public class Solution {
         long result;
         String remainingSprings = springs.substring(1);
         if (firstChar == '.') {
-            if (currentGroupLength > 0) {
-                if (currentGroupLength == damagedSpringGroups.getFirst()) {
-                    result = countArrangements(results, remainingSprings, damagedSpringGroups.subList(1, damagedSpringGroups.size()), 0);
-                } else {
-                    result = 0;
-                }
-            } else {
-                result = countArrangements(results, remainingSprings, damagedSpringGroups, 0);
-            }
+            result = getResultWithDot(results, remainingSprings, damagedSpringGroups, currentGroupLength);
         } else if (firstChar == '#') {
-            result = countArrangements(results, remainingSprings, damagedSpringGroups, currentGroupLength + 1);
+            result = getResultWithPound(results, remainingSprings, damagedSpringGroups, currentGroupLength);
         } else {
             // set '.'
-            long withDot;
-            if (currentGroupLength > 0) {
-                if (currentGroupLength == damagedSpringGroups.getFirst()) {
-                    withDot = countArrangements(results, remainingSprings, damagedSpringGroups.subList(1, damagedSpringGroups.size()), 0);
-                } else {
-                    withDot = 0;
-                }
-            } else {
-                withDot = countArrangements(results, remainingSprings, damagedSpringGroups, 0);
-            }
+            long withDot = getResultWithDot(results, remainingSprings, damagedSpringGroups, currentGroupLength);
             // set '#'
-            long withPound = countArrangements(results, remainingSprings, damagedSpringGroups, currentGroupLength + 1);
+            long withPound = getResultWithPound(results, remainingSprings, damagedSpringGroups, currentGroupLength);
             result = withDot + withPound;
         }
         results.put(key, result);
         return result;
     }
 
+    private long getResultWithDot(Map<String, Long> results, String remainingSprings, List<Integer> damagedSpringGroups, int currentGroupLength) {
+        long result;
+        if (currentGroupLength > 0) {
+            if (currentGroupLength == damagedSpringGroups.getFirst()) {
+                result = countArrangements(results, remainingSprings, damagedSpringGroups.subList(1, damagedSpringGroups.size()), 0);
+            } else {
+                result = 0;
+            }
+        } else {
+            result = countArrangements(results, remainingSprings, damagedSpringGroups, 0);
+        }
+        return result;
+    }
+
+    private long getResultWithPound(Map<String, Long> results, String remainingSprings, List<Integer> damagedSpringGroups, int currentGroupLength) {
+        return countArrangements(results, remainingSprings, damagedSpringGroups, currentGroupLength + 1);
+    }
+
     private String getKey(String springs, List<Integer> damagedSpringGroups, int currentGroupLength) {
         return String.format("%s-%s-%s", springs, damagedSpringGroups, currentGroupLength);
-    }
-
-    private void tryPossibleArrangements(String springs, List<Integer> damagedSpringGroups, List<String> results) {
-        int unknownCharIndex = springs.indexOf("?");
-        if (unknownCharIndex == -1) {
-            if (isValid(springs, damagedSpringGroups)) {
-                results.add(springs);
-            }
-            return;
-        }
-
-        String withEmpty = replaceCharacter(springs, unknownCharIndex, '.');
-        tryPossibleArrangements(withEmpty, damagedSpringGroups, results);
-
-        String withFilled = replaceCharacter(springs, unknownCharIndex, '#');
-        tryPossibleArrangements(withFilled, damagedSpringGroups, results);
-    }
-
-    private String replaceCharacter(String s, int index, char newChar) {
-        StringBuilder stringBuilder = new StringBuilder(s);
-        stringBuilder.setCharAt(index, newChar);
-        return stringBuilder.toString();
-    }
-
-    private boolean isValid(String springs, List<Integer> damagedSpringGroups) {
-        List<String> groups = getGroups(springs);
-
-        if (groups.size() != damagedSpringGroups.size()) {
-            return false;
-        }
-
-        for (int i = 0; i < groups.size(); i++) {
-            String group = groups.get(i);
-            Integer damagedSpringGroupLength = damagedSpringGroups.get(i);
-
-            if (group.length() != damagedSpringGroupLength) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private List<String> getGroups(String springs) {
-        List<String> groups = new ArrayList<>();
-        StringBuilder currentGroup = null;
-        for (int i = 0; i < springs.length(); i++) {
-            char c = springs.charAt(i);
-            if (c == '.') {
-                if (currentGroup != null) {
-                    groups.add(currentGroup.toString());
-                    currentGroup = null;
-                }
-            } else {
-                if (currentGroup == null) {
-                    currentGroup = new StringBuilder();
-                }
-                currentGroup.append(c);
-            }
-        }
-        if (currentGroup != null) {
-            groups.add(currentGroup.toString());
-        }
-        return groups;
     }
 
     public static void main(String[] args) throws IOException {
