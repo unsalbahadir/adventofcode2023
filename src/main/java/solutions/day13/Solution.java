@@ -168,12 +168,6 @@ public class Solution {
         return startingPoints;
     }
 
-    private String replaceChar(String s, int index, char newChar) {
-        StringBuilder stringBuilder = new StringBuilder(s);
-        stringBuilder.setCharAt(index, newChar);
-        return stringBuilder.toString();
-    }
-
     private int findSmudge(String line1, String line2) {
         int diffCharIndex = -1;
         for (int i = 0; i < line1.length(); i++) {
