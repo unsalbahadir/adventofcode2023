@@ -11,13 +11,6 @@ import java.util.stream.Collectors;
 
 public class Solution {
 
-    enum Direction {
-        NORTH,
-        WEST,
-        SOUTH,
-        EAST
-    }
-
     public long getSolution(List<String> lines) {
         List<List<Character>> grid = convertToGrid(lines);
         tiltNorth(grid);
@@ -27,7 +20,6 @@ public class Solution {
     public long getSolution2(List<String> lines) {
         List<List<Character>> grid = convertToGrid(lines);
         int cycleCount = 1000000000;
-        int logInterval = cycleCount / 100;
         Set<List<List<Character>>> gridCache = new HashSet<>();
         boolean cacheHitOnce = false;
         int indexInLoop = -1;
@@ -55,12 +47,9 @@ public class Solution {
                     break;
                 }
             }
-//            if (i % logInterval == 0) {
-//                System.out.println(i + "/" + cycleCount);
-//            }
         }
 //        System.out.println("Grid after " + cycleCount + " cycles: ");
-        printGrid(grid);
+//        printGrid(grid);
         return calculateLoad(grid);
     }
 
