@@ -53,7 +53,55 @@ public class Solution {
         int maxRow = lines.size() - 1;
         int maxColumn = lines.getFirst().length() - 1;
         Map<Position, Character> mirrors = getMirrors(lines);
-        List<Position> energizedPositions = getEnergizedPositions(mirrors, maxRow, maxColumn);
+
+        Beam firstBeam = new Beam(new ArrayList<>(), Direction.EAST);
+        firstBeam.positions.add(new Position(0, 0));
+        return getEnergizedCount(mirrors, firstBeam, maxRow, maxColumn);
+    }
+
+    public int getSolution2(List<String> lines) {
+        int maxRow = lines.size() - 1;
+        int maxColumn = lines.getFirst().length() - 1;
+        Map<Position, Character> mirrors = getMirrors(lines);
+
+        int maxEnergizedCount = -1;
+        // top row
+        for (int column = 0; column <= maxColumn; column++) {
+            Beam firstBeam = new Beam(new ArrayList<>(), Direction.SOUTH);
+            firstBeam.positions.add(new Position(0, column));
+            int energizedCount = getEnergizedCount(mirrors, firstBeam, maxRow, maxColumn);
+            maxEnergizedCount = Math.max(maxEnergizedCount, energizedCount);
+        }
+
+        // bottom row
+        for (int column = 0; column <= maxColumn; column++) {
+            Beam firstBeam = new Beam(new ArrayList<>(), Direction.NORTH);
+            firstBeam.positions.add(new Position(maxRow, column));
+            int energizedCount = getEnergizedCount(mirrors, firstBeam, maxRow, maxColumn);
+            maxEnergizedCount = Math.max(maxEnergizedCount, energizedCount);
+        }
+
+        // left column
+        for (int row = 0; row <= maxRow; row++) {
+            Beam firstBeam = new Beam(new ArrayList<>(), Direction.EAST);
+            firstBeam.positions.add(new Position(row, 0));
+            int energizedCount = getEnergizedCount(mirrors, firstBeam, maxRow, maxColumn);
+            maxEnergizedCount = Math.max(maxEnergizedCount, energizedCount);
+        }
+
+        // right column
+        for (int row = 0; row <= maxRow; row++) {
+            Beam firstBeam = new Beam(new ArrayList<>(), Direction.WEST);
+            firstBeam.positions.add(new Position(row, maxColumn));
+            int energizedCount = getEnergizedCount(mirrors, firstBeam, maxRow, maxColumn);
+            maxEnergizedCount = Math.max(maxEnergizedCount, energizedCount);
+        }
+
+        return maxEnergizedCount;
+    }
+
+    private int getEnergizedCount(Map<Position, Character> mirrors, Beam firstBeam, int maxRow, int maxColumn) {
+        List<Position> energizedPositions = getEnergizedPositions(mirrors, firstBeam, maxRow, maxColumn);
         return energizedPositions.size();
     }
 
@@ -74,13 +122,9 @@ public class Solution {
         return mirrors;
     }
 
-    private List<Position> getEnergizedPositions(Map<Position, Character> mirrors, int maxRow, int maxColumn) {
+    private List<Position> getEnergizedPositions(Map<Position, Character> mirrors, Beam firstBeam, int maxRow, int maxColumn) {
         List<Beam> beams = new ArrayList<>();
-        Beam firstBeam = new Beam(new ArrayList<>(), Direction.EAST);
         beams.add(firstBeam);
-
-        Position startingPosition = new Position(0, 0);
-        firstBeam.positions.add(startingPosition);
 
         Set<String> cache = new HashSet<>();
 
@@ -200,5 +244,6 @@ public class Solution {
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day16.txt"));
         System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
     }
 }
