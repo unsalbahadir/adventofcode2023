@@ -81,14 +81,11 @@ public class Solution {
         int maxRow = lines.size() - 1;
         int maxColumn = lines.getFirst().length() - 1;
 
-//        int minCostToEnd = getMinCostToEnd(grid, startingPosition, null,
-//                0, 0, new HashSet<>());
         int minCostToEnd = getMinCostToEnd(positionCosts, maxRow, maxColumn);
         return minCostToEnd;
     }
 
     private int getMinCostToEnd(int[][] positionCosts, int maxRow, int maxColumn) {
-//        Map<Position, Map<Direction, Integer>> distancesOfPositionByDirection = new HashMap<>();
         Map<Position, Integer> distances = new HashMap<>();
         for (int row = 0; row < positionCosts.length; row++) {
             for (int column = 0; column < positionCosts[row].length; column++) {
@@ -116,29 +113,15 @@ public class Solution {
         while (!positionsQueue.isEmpty()) {
             // go through adjacent positions
             Position currentPosition = positionsQueue.poll();
-//            Position previousPosition = previousPositions.get(currentPosition);
-//            int timesMovedStraight = countTimesMovedStraight(previousPositions, currentPosition, previousPosition);
-//            if (timesMovedStraight != currentPosition.timesMovedStraight) {
-//                System.out.println("Wrong");
-//            }
-//            if (currentPosition.row == maxRow && currentPosition.column == maxColumn) {
-//                System.out.println("End position:" + currentPosition);
-//            }
 
-            int timesMovedStraight = currentPosition.timesMovedStraight;
-
-            List<Position> adjacentPositions = getAdjacentPositions(currentPosition,
-                    timesMovedStraight < 3, maxRow, maxColumn);
+            List<Position> adjacentPositions = getAdjacentPositions(currentPosition, maxRow, maxColumn, 3);
 
             for (Position adjacentPosition : adjacentPositions) {
-//                Position actualAdjacentPosition = findPosition(distances.keySet(), adjacentPosition);
                 int possibleNewDistance = distances.get(currentPosition) + positionCosts[adjacentPosition.row][adjacentPosition.column];
                 int currentDistanceByDirection = distances.get(adjacentPosition);
 
                 if (possibleNewDistance < currentDistanceByDirection) {
                     adjacentPosition.distanceFromStart = possibleNewDistance;
-//                    actualAdjacentPosition.directionFromPrevious = adjacentPosition.directionFromPrevious;
-//                    actualAdjacentPosition.timesMovedStraight = adjacentPosition.timesMovedStraight;
 
                     previousPositions.put(adjacentPosition, currentPosition);
                     distances.put(adjacentPosition, possibleNewDistance);
@@ -148,7 +131,6 @@ public class Solution {
                 }
             }
         }
-//        printGrid(distances.keySet(), maxRow, maxColumn);
 
         Position endPosition = findPosition(distances, new Position(maxRow, maxColumn));
         endPosition.distanceFromStart = distances.get(endPosition);
@@ -156,31 +138,13 @@ public class Solution {
         return endPosition.distanceFromStart;
     }
 
-    private int countTimesMovedStraight(Map<Position, Position> previousPositions, Position currentPosition, Position previousPosition) {
-        int timesMovedStraight = 1; // always at least one
-        if (previousPosition == null) {
-            return timesMovedStraight;
-        }
-        Direction direction = previousPosition.directionFromPrevious;
-        while (direction == currentPosition.directionFromPrevious) {
-            timesMovedStraight++;
-            previousPosition = previousPositions.get(previousPosition);
-            if (previousPosition == null) {
-                direction = null;
-            } else {
-                direction = previousPosition.directionFromPrevious;
-            }
-        }
-        return timesMovedStraight;
-    }
-
-    private List<Position> getAdjacentPositions(Position position, boolean canMoveStraight, int maxRow, int maxColumn) {
+    private List<Position> getAdjacentPositions(Position position, int maxRow, int maxColumn, int maxStraightMove) {
         List<Position> possibleAdjacentPositions = new ArrayList<>();
         for (Direction direction : Direction.values()) {
             if (direction == Direction.getOppositeDirection(position.directionFromPrevious)) { // can't go back
                 continue;
             }
-            if (!canMoveStraight && direction == position.directionFromPrevious) { // can't go straight anymore
+            if (position.timesMovedStraight >= maxStraightMove && direction == position.directionFromPrevious) { // can't go straight anymore
                 continue;
             }
 
@@ -203,22 +167,6 @@ public class Solution {
             case SOUTH -> new Position(position.row + 1, position.column, direction);
             case WEST -> new Position(position.row, position.column - 1, direction);
         };
-    }
-
-    private Position getPositionInSameDirection(Position position, Position previousPosition) {
-        if (position.row == previousPosition.row) {
-            if (position.column > previousPosition.column) {
-                return new Position(position.row, position.column + 1);
-            } else {
-                return new Position(position.row, position.column - 1);
-            }
-        } else { // same column
-            if (position.row > previousPosition.row) {
-                return new Position(position.row + 1, position.column);
-            } else {
-                return new Position(position.row - 1, position.column);
-            }
-        }
     }
 
     private boolean isValid(Position position, int maxRow, int maxColumn) {
@@ -267,17 +215,16 @@ public class Solution {
             distances[previousPosition.row][previousPosition.column] = previousPosition.distanceFromStart;
             visited.add(previousPosition);
             
-//            System.out.println(previousPosition);
         }
         System.out.println("Path taken: ");
         for (char[] chars : grid) {
             System.out.println(new String(chars));
         }
 
-        System.out.println("Distances: ");
-        for (int[] distance : distances) {
-            System.out.println(Arrays.toString(distance));
-        }
+//        System.out.println("Distances: ");
+//        for (int[] distance : distances) {
+//            System.out.println(Arrays.toString(distance));
+//        }
     }
 
     private static char getCharacterOfDirection(Position previousPosition) {
@@ -289,22 +236,179 @@ public class Solution {
         };
     }
 
-    private void printGrid(Set<Position> positions, int maxRow, int maxColumn) {
-        int[][] grid = new int[maxRow + 1][maxColumn + 1];
-        for (Position position : positions) {
-            grid[position.row][position.column] = position.distanceFromStart;
+    public int getSolution2(List<String> lines) {
+        int[][] positionCosts = getPositionCosts(lines);
+        int maxRow = lines.size() - 1;
+        int maxColumn = lines.getFirst().length() - 1;
+
+        int minCostToEnd = getMinCostToEnd2(positionCosts, maxRow, maxColumn);
+        return minCostToEnd;
+    }
+
+    private int getMinCostToEnd2(int[][] positionCosts, int maxRow, int maxColumn) {
+        Map<Position, Integer> distances = new HashMap<>();
+        for (int row = 0; row < positionCosts.length; row++) {
+            for (int column = 0; column < positionCosts[row].length; column++) {
+                for (Direction direction : Direction.values()) {
+                    for (int timesMovedStraight = 4; timesMovedStraight <= 10; timesMovedStraight++) {
+                        Position positionInDirection = new Position(row, column, direction, timesMovedStraight);
+                        distances.put(positionInDirection, Integer.MAX_VALUE);
+                    }
+                }
+            }
         }
-        System.out.println("Distances: ");
-        for (int[] ints : grid) {
-            System.out.println(Arrays.toString(ints));
+
+        Comparator<Position> positionComparator = (Comparator.comparing(position -> position.distanceFromStart));
+        PriorityQueue<Position> positionsQueue = new PriorityQueue<>(positionComparator);
+
+        Position startingPosition = new Position(0, 0, Direction.EAST, 0);
+        startingPosition.distanceFromStart = 0;
+
+        distances.put(startingPosition, 0);
+
+        positionsQueue.add(startingPosition);
+
+        Map<Position, Position> previousPositions = new HashMap<>();
+
+        while (!positionsQueue.isEmpty()) {
+            // go through adjacent positions
+            Position currentPosition = positionsQueue.poll();
+//            if (currentPosition.timesMovedStraight < 4) {
+//                List<Position> nextPositions = getNextPositionsUntilMinimum(currentPosition, maxRow, maxColumn);
+//
+//                if (!nextPositions.isEmpty()) {
+//                    int totalDistanceOfNextPositions = nextPositions.stream()
+//                            .mapToInt(pos -> positionCosts[pos.row][pos.column])
+//                            .sum();
+//
+//                    int possibleNewDistance = distances.get(currentPosition) + totalDistanceOfNextPositions;
+//                    Position arrivedPosition = nextPositions.getLast();
+//                    int currentDistanceByDirection = distances.get(arrivedPosition);
+//
+//                    if (possibleNewDistance < currentDistanceByDirection) {
+//                        arrivedPosition.distanceFromStart = possibleNewDistance;
+//                        distances.put(arrivedPosition, possibleNewDistance);
+//
+//                        for (int i = 0; i < nextPositions.size(); i++) {
+//                            Position nextPosition = nextPositions.get(i);
+//                            if (i == 0) {
+//                                previousPositions.put(nextPosition, currentPosition);
+//                            } else {
+//                                previousPositions.put(nextPosition, nextPositions.get(i - 1));
+//                            }
+//                        }
+//                        if (!positionsQueue.contains(arrivedPosition)) {
+//                            positionsQueue.add(arrivedPosition);
+//                        }
+//                    }
+//                }
+//            } else {
+                List<List<Position>> adjacentPositions = getAdjacentPositions2(currentPosition, maxRow, maxColumn, 10);
+
+                for (List<Position> nextPositions : adjacentPositions) {
+                    int totalDistanceOfNextPositions = nextPositions.stream()
+                            .mapToInt(pos -> positionCosts[pos.row][pos.column])
+                            .sum();
+
+                    int possibleNewDistance = distances.get(currentPosition) + totalDistanceOfNextPositions;
+                    Position arrivedPosition = nextPositions.getLast();
+                    int currentDistanceByDirection = distances.get(arrivedPosition);
+
+                    if (possibleNewDistance < currentDistanceByDirection) {
+                        arrivedPosition.distanceFromStart = possibleNewDistance;
+                        distances.put(arrivedPosition, possibleNewDistance);
+
+                        for (int i = 0; i < nextPositions.size(); i++) {
+                            Position nextPosition = nextPositions.get(i);
+                            if (i == 0) {
+                                previousPositions.put(nextPosition, currentPosition);
+                            } else {
+                                previousPositions.put(nextPosition, nextPositions.get(i - 1));
+                            }
+                        }
+                        if (!positionsQueue.contains(arrivedPosition)) {
+                            positionsQueue.add(arrivedPosition);
+                        }
+                    }
+                }
+//            }
+
         }
+
+        Position endPosition = findPosition(distances, new Position(maxRow, maxColumn));
+        endPosition.distanceFromStart = distances.get(endPosition);
+        printPathTakenToStart(previousPositions, endPosition);
+        return endPosition.distanceFromStart;
+    }
+
+    private List<Position> getNextPositionsUntilMinimum(Position position, int maxRow, int maxColumn) {
+            List<Position> nextPositions = new ArrayList<>();
+            Position nextPosition = position;
+            for (int i = 1; i < 4; i++) {
+                nextPosition = getPositionInDirection(nextPosition, position.directionFromPrevious);
+                if (!isValid(nextPosition, maxRow, maxColumn)) {
+                    return List.of();
+                }
+                nextPosition.timesMovedStraight = position.timesMovedStraight + i;
+                nextPositions.add(nextPosition);
+            }
+        return nextPositions;
+    }
+
+    private List<List<Position>> getAdjacentPositions2(Position position, int maxRow, int maxColumn, int maxStraightMove) {
+        List<List<Position>> possibleAdjacentPositionsInDirection = new ArrayList<>();
+        for (Direction direction : Direction.values()) {
+            if (direction == Direction.getOppositeDirection(position.directionFromPrevious)) { // can't go back
+                continue;
+            }
+            if (position.timesMovedStraight >= maxStraightMove && direction == position.directionFromPrevious) { // can't go straight anymore
+                continue;
+            }
+
+            List<Position> nextPositionsInDirection;
+            if (direction == position.directionFromPrevious) { // going straight
+                if (position.timesMovedStraight < 4) {
+                    nextPositionsInDirection = getNextPositionsUntilMinimum(position, direction, maxRow, maxColumn);
+                } else {
+                    nextPositionsInDirection = new ArrayList<>();
+                    Position positionInDirection = getPositionInDirection(position, direction);
+                    if (isValid(positionInDirection, maxRow, maxColumn)) {
+                        positionInDirection.timesMovedStraight = position.timesMovedStraight + 1;
+                        nextPositionsInDirection.add(positionInDirection);
+                    }
+                }
+            } else {
+                Position positionAfterTurn = new Position(position.row, position.column, position.directionFromPrevious, 0);
+                nextPositionsInDirection = getNextPositionsUntilMinimum(positionAfterTurn, direction, maxRow, maxColumn);
+            }
+            if (!nextPositionsInDirection.isEmpty()) {
+                possibleAdjacentPositionsInDirection.add(nextPositionsInDirection);
+            }
+        }
+
+        return possibleAdjacentPositionsInDirection;
+    }
+
+    private List<Position> getNextPositionsUntilMinimum(Position position, Direction direction, int maxRow, int maxColumn) {
+        List<Position> nextPositions = new ArrayList<>();
+        Position nextPosition = position;
+        for (int i = 1; i <= 4; i++) {
+            nextPosition = getPositionInDirection(nextPosition, direction);
+            if (!isValid(nextPosition, maxRow, maxColumn)) {
+                return List.of();
+            }
+            nextPosition.timesMovedStraight = position.timesMovedStraight + i;
+            nextPositions.add(nextPosition);
+        }
+        return nextPositions;
     }
 
     public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day17.txt"));
-        System.out.println(solution.getSolution(lines));
+//        System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
 
 //        List<String> linesExample = Files.readAllLines(Paths.get("inputs/day17-2.txt"));
 //        int result = 0;
