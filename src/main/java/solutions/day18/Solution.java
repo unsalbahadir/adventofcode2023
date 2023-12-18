@@ -1,5 +1,7 @@
 package solutions.day18;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -8,18 +10,17 @@ import java.util.*;
 public class Solution {
 
     private enum Direction {
-        U,
         R,
         D,
-        L
+        L,
+        U
     }
 
-    private record Position(int row, int column) {}
+    private record Position(long row, long column) {}
 
-    private record Boundary(int minRow, int maxRow, int minColumn, int maxColumn) {}
+    private record Boundary(long minRow, long maxRow, long minColumn, long maxColumn) {}
 
     public int getSolution(List<String> lines) {
-
         List<Position> positions = new ArrayList<>();
         Position startingPosition = new Position(0, 0);
         positions.add(startingPosition);
@@ -27,18 +28,7 @@ public class Solution {
         for (String line : lines) {
             doCommand(line, positions);
         }
-
-        int maxRow = Integer.MIN_VALUE;
-        int maxColumn = Integer.MIN_VALUE;
-        int minRow = Integer.MAX_VALUE;
-        int minColumn = Integer.MAX_VALUE;
-        for (Position position : positions) {
-            maxRow = Math.max(maxRow, position.row);
-            minRow = Math.min(minRow, position.row);
-            maxColumn = Math.max(maxColumn, position.column);
-            minColumn = Math.min(minColumn, position.column);
-        }
-        Boundary boundary = new Boundary(minRow, maxRow, minColumn, maxColumn);
+        Boundary boundary = getBoundary(positions);
 
         System.out.println("Before dig:");
         printGrid(positions, boundary);
@@ -47,6 +37,27 @@ public class Solution {
 
         System.out.println("After dig:");
         printGrid(positions, boundary);
+
+        return positions.size();
+    }
+
+    public int getSolution2(List<String> lines) {
+        List<Position> positions = new ArrayList<>();
+        Position startingPosition = new Position(0, 0);
+        positions.add(startingPosition);
+
+        for (String line : lines) {
+            doCommand2(line, positions);
+        }
+        Boundary boundary = getBoundary(positions);
+
+//        System.out.println("Before dig:");
+//        printGrid(positions, boundary);
+
+        positions = digInterior(positions, boundary);
+
+//        System.out.println("After dig:");
+//        printGrid(positions, boundary);
 
         return positions.size();
     }
@@ -65,6 +76,26 @@ public class Solution {
         }
     }
 
+    private void doCommand2(String line, List<Position> positions) {
+        String[] split = line.split(" ");
+        String hex = StringUtils.substringBetween(split[2], "#", ")");
+
+        Direction[] values = Direction.values();
+        int directionValue = Character.getNumericValue(hex.charAt(hex.length() - 1));
+        Direction direction = values[directionValue];
+
+        int distance = Integer.parseInt(hex.substring(0, 5), 16);
+
+        for (long i = 1; i <= distance; i++) {
+            Position currentPosition = positions.getLast();
+            Position newPosition = getPositionInDirection(currentPosition, direction);
+            if (!positions.contains(newPosition)) {
+                positions.add(newPosition);
+            }
+        }
+    }
+
+
     private Position getPositionInDirection(Position position, Direction direction) {
         return switch (direction) {
             case U -> new Position(position.row - 1, position.column);
@@ -72,6 +103,20 @@ public class Solution {
             case D -> new Position(position.row + 1, position.column);
             case L -> new Position(position.row, position.column - 1);
         };
+    }
+
+    private Boundary getBoundary(List<Position> positions) {
+        long maxRow = Integer.MIN_VALUE;
+        long maxColumn = Integer.MIN_VALUE;
+        long minRow = Integer.MAX_VALUE;
+        long minColumn = Integer.MAX_VALUE;
+        for (Position position : positions) {
+            maxRow = Math.max(maxRow, position.row);
+            minRow = Math.min(minRow, position.row);
+            maxColumn = Math.max(maxColumn, position.column);
+            minColumn = Math.min(minColumn, position.column);
+        }
+        return new Boundary(minRow, maxRow, minColumn, maxColumn);
     }
 
     private List<Position> digInterior(List<Position> positions, Boundary boundary) {
@@ -111,8 +156,8 @@ public class Solution {
 
     private void printGrid(List<Position> positions, Boundary boundary) {
         Set<Position> positionSet = new HashSet<>(positions);
-        for (int row = boundary.minRow; row <= boundary.maxRow; row++) {
-            for (int column = boundary.minColumn; column <= boundary.maxColumn; column++) {
+        for (long row = boundary.minRow; row <= boundary.maxRow; row++) {
+            for (long column = boundary.minColumn; column <= boundary.maxColumn; column++) {
                 Position position = new Position(row, column);
                 if (positionSet.contains(position)) {
                     System.out.print('#');
@@ -129,5 +174,6 @@ public class Solution {
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day18.txt"));
         System.out.println(solution.getSolution(lines));
+//        System.out.println(solution.getSolution2(lines));
     }
 }
