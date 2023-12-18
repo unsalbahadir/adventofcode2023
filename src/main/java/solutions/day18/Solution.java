@@ -5,7 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Solution {
 
@@ -40,32 +41,32 @@ public class Solution {
         return getArea(corners);
     }
 
-  private void addCorner(String line, List<Position> corners) {
-    String[] split = line.split(" ");
-    Direction direction = Direction.valueOf(split[0]);
-    int distance = Integer.parseInt(split[1]);
+    private void addCorner(String line, List<Position> corners) {
+        String[] split = line.split(" ");
+        Direction direction = Direction.valueOf(split[0]);
+        int distance = Integer.parseInt(split[1]);
 
-    Position lastCorner = corners.getLast();
-    Position newPosition = getPositionInDirection(lastCorner, direction, distance);
-    corners.add(newPosition);
-  }
+        Position lastCorner = corners.getLast();
+        Position newPosition = getPositionInDirection(lastCorner, direction, distance);
+        corners.add(newPosition);
+    }
 
-  private void addCorner2(String line, List<Position> corners) {
-    String[] split = line.split(" ");
-    String hex = StringUtils.substringBetween(split[2], "#", ")");
+    private void addCorner2(String line, List<Position> corners) {
+        String[] split = line.split(" ");
+        String hex = StringUtils.substringBetween(split[2], "#", ")");
 
-    Direction[] values = Direction.values();
-    int directionValue = Character.getNumericValue(hex.charAt(hex.length() - 1));
-    Direction direction = values[directionValue];
+        Direction[] values = Direction.values();
+        int directionValue = Character.getNumericValue(hex.charAt(hex.length() - 1));
+        Direction direction = values[directionValue];
 
-    int distance = Integer.parseInt(hex.substring(0, 5), 16);
+        int distance = Integer.parseInt(hex.substring(0, 5), 16);
 
-    Position lastCorner = corners.getLast();
-    Position newPosition = getPositionInDirection(lastCorner, direction, distance);
-    corners.add(newPosition);
-  }
+        Position lastCorner = corners.getLast();
+        Position newPosition = getPositionInDirection(lastCorner, direction, distance);
+        corners.add(newPosition);
+    }
 
-  private Position getPositionInDirection(Position position, Direction direction, int distance) {
+    private Position getPositionInDirection(Position position, Direction direction, int distance) {
         return switch (direction) {
             case U -> new Position(position.row - distance, position.column);
             case R -> new Position(position.row, position.column + distance);
@@ -74,7 +75,7 @@ public class Solution {
         };
     }
 
-  private long getArea(List<Position> corners) {
+    private long getArea(List<Position> corners) {
         long area = 0;
         long circumference = 0;
 
@@ -83,9 +84,9 @@ public class Solution {
 
             Position nextPosition;
             if (i == corners.size() - 1) {
-              nextPosition = corners.get(0);
+                nextPosition = corners.get(0);
             } else {
-              nextPosition = corners.get(i + 1);
+                nextPosition = corners.get(i + 1);
             }
             circumference += Math.abs(nextPosition.row - currentPosition.row) + Math.abs(nextPosition.column - currentPosition.column);
             area += (currentPosition.row * nextPosition.column) - (nextPosition.row * currentPosition.column);
@@ -98,7 +99,7 @@ public class Solution {
         return result;
     }
 
-  public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day18.txt"));
