@@ -1,14 +1,12 @@
 package solutions.day19;
 
+import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class Solution {
@@ -19,7 +17,17 @@ public class Solution {
 
     private record Part(int x, int m, int a, int s) {}
 
+    private record Rule2(String field, String operator, int checkedValue, String output) {}
+    private record Workflow2(String key, List<Rule2> rules) {}
+    private record PartWithRange(Map<Field, Range<Integer>> ranges) {}
+    private record Iteration(PartWithRange partWithRange, Workflow2 currentWorkflow) {}
 
+    private enum Field {
+        x,
+        m,
+        a,
+        s
+    }
     public int getSolution(List<String> lines) {
         Map<String, Workflow> workflows = new HashMap<>();
         int index = 0;
@@ -48,8 +56,6 @@ public class Solution {
 
         return result;
     }
-
-
 
     private Workflow getWorkflow(String line) {
         String key = StringUtils.substringBefore(line, "{");
@@ -150,10 +156,144 @@ public class Solution {
         return false;
     }
 
+    public long getSolution2(List<String> lines) {
+        Map<String, Workflow2> workflows = new HashMap<>();
+        int index = 0;
+        while (!lines.get(index).isEmpty()) {
+            String line = lines.get(index);
+            Workflow2 workflow = getWorkflow2(line);
+            workflows.put(workflow.key, workflow);
+            index++;
+        }
+
+        List<PartWithRange> acceptedPartRanges = findAcceptedPartRanges(workflows);
+        System.out.println(acceptedPartRanges);
+
+        long result = 0;
+        for (PartWithRange acceptedPartRange : acceptedPartRanges) {
+            long combinations = 1;
+            for (Range<Integer> value : acceptedPartRange.ranges.values()) {
+                int size = value.getMaximum() - value.getMinimum() + 1;
+                combinations *= size;
+            }
+            result += combinations;
+        }
+        return result;
+    }
+
+    private List<PartWithRange> findAcceptedPartRanges(Map<String, Workflow2> workflows) {
+        List<PartWithRange> acceptedPartRanges = new ArrayList<>();
+
+        Queue<Iteration> queue = new LinkedList<>();
+
+        Map<Field, Range<Integer>> initialRanges = Map.of(
+                Field.x, Range.of(1, 4000),
+                Field.m, Range.of(1, 4000),
+                Field.a, Range.of(1, 4000),
+                Field.s, Range.of(1, 4000)
+        );
+        PartWithRange firstPartWithRange = new PartWithRange(initialRanges);
+        Workflow2 firstWorkflow = workflows.get("in");
+        Iteration iteration = new Iteration(firstPartWithRange, firstWorkflow);
+        queue.add(iteration);
+
+        while (!queue.isEmpty()) {
+            Iteration poll = queue.poll();
+            PartWithRange currentPart = poll.partWithRange;
+            Workflow2 currentWorkflow = poll.currentWorkflow;
+
+            for (Rule2 rule : currentWorkflow.rules) {
+                if (rule.operator == null) {
+                    if (rule.output.equals("A")) {
+                        acceptedPartRanges.add(currentPart);
+                        break;
+                    }
+                    if (rule.output.equals("R")) {
+                        break;
+                    }
+
+                    Workflow2 newWorkflow = workflows.get(rule.output);
+                    Iteration newIteration = new Iteration(currentPart, newWorkflow);
+                    queue.add(newIteration);
+                } else {
+                    Field field = Field.valueOf(rule.field);
+                    Range<Integer> fieldRange = getFieldRange(currentPart, field);
+                    boolean isGreaterThan = rule.operator.equals(">");
+
+                    List<Range<Integer>> ranges = splitRanges(fieldRange, isGreaterThan, rule.checkedValue);
+                    Range<Integer> passingRange = ranges.getFirst();
+
+                    Map<Field, Range<Integer>> newRangesForPassingPart = new HashMap<>(currentPart.ranges);
+                    newRangesForPassingPart.put(field, passingRange);
+                    PartWithRange newPart = new PartWithRange(newRangesForPassingPart);
+
+                    if (rule.output.equals("A")) {
+                        acceptedPartRanges.add(newPart);
+                    } else if (!rule.output.equals("R")) {
+                        Workflow2 newWorkflow = workflows.get(rule.output);
+                        Iteration newIteration = new Iteration(newPart, newWorkflow);
+                        queue.add(newIteration);
+                    }
+
+                    Range<Integer> notPassingRange = ranges.getLast();
+                    Map<Field, Range<Integer>> newRangesForNotPassingPart = new HashMap<>(currentPart.ranges);
+                    newRangesForNotPassingPart.put(field, notPassingRange);
+                    currentPart = new PartWithRange(newRangesForNotPassingPart);
+                }
+            }
+        }
+
+        return acceptedPartRanges;
+    }
+
+    private Range<Integer> getFieldRange(PartWithRange part, Field field) {
+        return part.ranges.get(field);
+    }
+
+    private List<Range<Integer>> splitRanges(Range<Integer> initialRange, boolean isGreaterThan, int checkedValue) {
+        if (isGreaterThan) {
+            Range<Integer> greaterRange = Range.of(checkedValue + 1, initialRange.getMaximum());
+            Range<Integer> lesserRange = Range.of(initialRange.getMinimum(), checkedValue);
+
+            return List.of(greaterRange, lesserRange);
+        } else {
+            Range<Integer> greaterRange = Range.of(checkedValue, initialRange.getMaximum());
+            Range<Integer> lesserRange = Range.of(initialRange.getMinimum(), checkedValue - 1);
+
+            return List.of(lesserRange, greaterRange);
+        }
+    }
+
+    private Workflow2 getWorkflow2(String line) {
+        String key = StringUtils.substringBefore(line, "{");
+        List<Rule2> rules = new ArrayList<>();
+
+        String rulesString = StringUtils.substringBetween(line, "{", "}");
+        String[] split = rulesString.split(",");
+        for (String ruleString : split) {
+            Rule2 rule2;
+            if (ruleString.contains(":")) {
+                String field = ruleString.substring(0, 1);
+                String operator = ruleString.substring(1, 2);
+                int i = ruleString.indexOf(":");
+                int checkedValue = Integer.parseInt(ruleString.substring(2, i));
+                String output = ruleString.substring(i + 1);
+
+                rule2 = new Rule2(field, operator, checkedValue, output);
+            } else {
+                rule2 = new Rule2(null, null, -1, ruleString);
+            }
+            rules.add(rule2);
+        }
+
+        return new Workflow2(key, rules);
+    }
+
     public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day19.txt"));
-        System.out.println(solution.getSolution(lines));
+//        System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
     }
 }
