@@ -15,6 +15,9 @@ public class Solution {
 
     static Queue<Module> mainQueue = new LinkedList<>();
 
+    private static final String TARGET_MODULE_NAME = "rx";
+    private static String INPUT_MODULE_OF_TARGET;
+
     private enum ModuleType {
         FLIP_FLOP,
         CONJUNCTION,
@@ -118,10 +121,10 @@ public class Solution {
                 Module inputModule = poll.getLeft();
                 Pulse pulse = poll.getRight();
 
+                mostRecentPulseFromInputs.put(inputModule, pulse);
                 for (Module destinationModule : destinationModules) {
-                    mostRecentPulseFromInputs.put(inputModule, pulse);
-                    if (name.equals("gh") && pulse == Pulse.HIGH) {
-                        System.out.println("gh received a High pulse at step: " + buttonPresses +" from input module: " + inputModule);
+                    if (name.equals(INPUT_MODULE_OF_TARGET) && pulse == Pulse.HIGH) {
+                        System.out.println("gh received a High pulse at step: " + buttonPresses + " from input module: " + inputModule);
                     }
                     if (destinationModule != null) {
                         Pulse pulseToSend;
@@ -223,14 +226,27 @@ public class Solution {
         Map<String, Module> modules = createModules(lines);
         ButtonModule buttonModule = new ButtonModule((BroadcasterModule) modules.get("broadcaster"));
 
+        Map<Module, Long> cycles = new HashMap<>();
+        ConjunctionModule inputModuleOfTarget = (ConjunctionModule) modules.get(INPUT_MODULE_OF_TARGET);
+        for (Module module : inputModuleOfTarget.mostRecentPulseFromInputs.keySet()) {
+            cycles.put(module, -1L);
+        }
+
         long buttonPresses = 0;
         while (true) {
             buttonPresses++;
             buttonModule.sendPulse();
             while (!mainQueue.isEmpty()) {
                 Module module = mainQueue.poll();
-                if (module.name.equals("rx") && module.receivedPulses.contains(Pulse.LOW)) {
-                    return buttonPresses;
+                if (module.name.equals(INPUT_MODULE_OF_TARGET)) {
+                    for (Pair<Module, Pulse> receivedPulsesWithInput : inputModuleOfTarget.receivedPulsesWithInputs) {
+                        if (receivedPulsesWithInput.getRight() == Pulse.HIGH) {
+                            cycles.put(receivedPulsesWithInput.getLeft(), buttonPresses);
+                        }
+                    }
+                    if (cycles.values().stream().noneMatch(cycle -> cycle < 0)) {
+                        return lcm(cycles.values());
+                    }
                 }
                 module.processReceivedPulses(buttonPresses);
             }
@@ -270,6 +286,9 @@ public class Solution {
 
         // put modules in place
         for (Module module : modules.values()) {
+            if (module.destinationModuleNames.contains(TARGET_MODULE_NAME)) {
+                INPUT_MODULE_OF_TARGET = module.name;
+            }
             module.destinationModules = module.destinationModuleNames.stream()
                     .map(modules::get)
                     .collect(Collectors.toList());
@@ -283,6 +302,24 @@ public class Solution {
             }
         }
         return modules;
+    }
+
+    private long lcm(Collection<Long> numbers) {
+        return numbers.stream().reduce(this::lcm).orElse(0L);
+    }
+
+    private long lcm(long number1, long number2) {
+        long gcd = gcd(number1, number2);
+        return (number1 * number2) / gcd;
+    }
+
+    private long gcd(long number1, long number2) {
+        if (number1 == 0 || number2 == 0) {
+            return number1 + number2;
+        }
+        long biggerNumber = Math.max(number1, number2);
+        long smallerNumber = Math.min(number1, number2);
+        return gcd(biggerNumber % smallerNumber, smallerNumber);
     }
 
     private void printStep(String sendingModuleName, Pulse pulse, String receivingModuleName) {
