@@ -85,7 +85,7 @@ public class Solution {
 
         int totalNumberOfBricksToFall = 0;
         for (Brick brick : bricks) {
-            Set<Brick> bricksToFallWhenDisintegrated = getBricksToFallWhenDisintegrated(brick);
+            Set<Brick> bricksToFallWhenDisintegrated = getBricksToFallWhenDisintegratedBFS(brick);
 //            System.out.println("Bricks to fall when brick " + brick + " is disintegrated: " + bricksToFallWhenDisintegrated.size());
             totalNumberOfBricksToFall += bricksToFallWhenDisintegrated.size();
         }
@@ -174,28 +174,28 @@ public class Solution {
                 brick.supportedBricks.stream().allMatch(supportedBrick -> supportedBrick.supportedByBricks.size() > 1);
     }
 
-    private Set<Brick> getBricksToFallWhenDisintegrated(Brick brick) {
-        brick.markedToFall = true;
+    private Set<Brick> getBricksToFallWhenDisintegratedBFS(Brick startingBrick) {
+        startingBrick.markedToFall = true;
 
-//        int numberOfBricksToFall = 0;
-        Set<Brick> bricksToFall = new HashSet<>();
+        Set<Brick> allBricksToFall = new HashSet<>();
+        Queue<Brick> bricksQueue = new LinkedList<>();
+        bricksQueue.add(startingBrick);
 
-        Set<Brick> supportedBricksToFall = new HashSet<>();
-        for (Brick supportedBrick : brick.supportedBricks) {
-            if (willFall(supportedBrick)) {
-                supportedBrick.markedToFall = true;
-                supportedBricksToFall.add(supportedBrick);
-//                numberOfBricksToFall++;
-                bricksToFall.add(supportedBrick);
+        while (!bricksQueue.isEmpty()) {
+            Brick currentBrick = bricksQueue.poll();
+
+            for (Brick supportedBrick : currentBrick.supportedBricks) {
+                if (willFall(supportedBrick)) {
+                    supportedBrick.markedToFall = true;
+                    bricksQueue.add(supportedBrick);
+                    allBricksToFall.add(supportedBrick);
+                }
             }
         }
-        for (Brick supportedBrickToFall : supportedBricksToFall) {
-            Set<Brick> bricksToFallWhenDisintegrated = getBricksToFallWhenDisintegrated(supportedBrickToFall);
-            bricksToFall.addAll(bricksToFallWhenDisintegrated);
-        }
 
-        brick.markedToFall = false;
-        return bricksToFall;
+        startingBrick.markedToFall = false;
+        allBricksToFall.forEach(brick -> brick.markedToFall = false);
+        return allBricksToFall;
     }
 
     private boolean willFall(Brick supportedBrick) {
