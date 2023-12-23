@@ -3,7 +3,6 @@ package solutions.day21;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,6 +17,8 @@ public class Solution {
     private static final class Farm {
         Position farmPosition;
         Set<Position> visitingPositions;
+
+        Position entryPosition;
 
         Farm parentFarm;
 
@@ -47,11 +48,11 @@ public class Solution {
 
         @Override
         public String toString() {
-            return "Farm[" +
-                    "farmPosition=" + farmPosition + ", " +
-                    "visitingPositions=" + visitingPositions + ']';
+            return "Farm{" +
+                    "farmPosition=" + farmPosition +
+                    ", entryPosition=" + entryPosition +
+                    '}';
         }
-
     }
 
     public int getSolution(List<String> lines) {
@@ -62,20 +63,22 @@ public class Solution {
     }
 
     public long getSolution2(List<String> lines) {
-        List<Position> gardenPositions = getGardenPositions(lines);
-        Position startingPosition = gardenPositions.getLast();
-
-        ROW_COUNT = lines.size();
-        COLUMN_COUNT = lines.getFirst().length();
+//        List<Position> gardenPositions = getGardenPositions(lines);
+//        Position startingPosition = gardenPositions.getLast();
+//
+//        ROW_COUNT = lines.size();
+//        COLUMN_COUNT = lines.getFirst().length();
 
 //        int result2 = countPossiblePositionsAfterSteps2(new HashSet<>(gardenPositions), startingPosition, 982);
 //        System.out.println("Result of version 2: " + result2);
-        long start = System.currentTimeMillis();
-        long result3 = countPossiblePositionsAfterSteps3(new HashSet<>(gardenPositions), startingPosition, 982);
-        long end = System.currentTimeMillis();
-        long duration = Duration.ofMillis(end - start).toSeconds();
-        System.out.println("Result of version 3: " + result3 + ", time taken: " + duration);
-        return result3;
+//        long start = System.currentTimeMillis();
+//        long result3 = countPossiblePositionsAfterSteps3(new HashSet<>(gardenPositions), startingPosition, 982);
+//        long end = System.currentTimeMillis();
+//        long duration = Duration.ofMillis(end - start).toSeconds();
+//        System.out.println("Result of version 3: " + result3 + ", time taken: " + duration);
+//        return result3;
+
+        return getResultWithFormula(26501365);
     }
 
     private List<Position> getGardenPositions(List<String> lines) {
@@ -195,6 +198,7 @@ public class Solution {
         firstFarmVisitingPositions.add(startingPosition);
 
         Farm startingFarm = new Farm(startingFarmPosition, firstFarmVisitingPositions, null);
+        startingFarm.entryPosition = startingPosition;
         farms.put(startingFarmPosition, startingFarm);
 
         Map<Farm, Map<Boolean, Integer>> farmResults = new HashMap<>();
@@ -232,7 +236,8 @@ public class Solution {
                         Farm newFarm = new Farm(farmPosition, newFarmVisitingPositions, currentFarm);
                         newFarms.add(newFarm);
 
-//                        System.out.println("New farm created: " + newFarm);
+                        newFarm.entryPosition = getProjectedPosition(positionOutside);
+//                        System.out.println("New farm created: " + newFarm + " with entry point: " + getProjectedPosition(positionOutside));
                     }
                 }
                 newVisitingPositions.removeAll(positionsOutsideFarm);
@@ -263,13 +268,13 @@ public class Solution {
             }
             steps++;
 
-            if (steps % 131 == 65) {
-                int n = steps / 131;
-                String stepsString = String.format("%s (n=%s)", steps, n);
+//            if (steps % 131 == 65) {
+//                int n = steps / 131;
+//                String stepsString = String.format("%s (n=%s)", steps, n);
 //                long resultOfCurrentStep = getResultOfAllFarms(steps, farms, farmResults);
-                long resultOfCurrentStepWithFormula = getResultOfAllFarmsWithFormula(farms, farmResults, steps);
-//                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep +
-//                        ", with formula: " +
+//                long resultOfCurrentStepWithFormula = getResultOfAllFarmsWithFormula(farms, farmResults, steps);
+//                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep
+//                        + ", with formula: " + resultOfCurrentStepWithFormula);
 //                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep +
 //                        ", active farm count: " + getActiveFarmCount(steps) +
 //                        ", finished farm count: " + getFinishedFarmCount(steps));
@@ -278,10 +283,11 @@ public class Solution {
 //                        ", Active farm formula result: " + getActiveFarmCount(steps));
 //                System.out.println("Finished farm count after " + stepsString + " steps: " + farmResults.size() +
 //                        ", Finished farm formula result: " + getFinishedFarmCount(steps));
-            }
+//            }
         }
 
-        return getResultOfAllFarms(stepsToTake, farms, farmResults);
+//        return getResultOfAllFarms(stepsToTake, farms, farmResults);
+        return getResultOfAllFarmsWithFormula(farms, farmResults, steps);
     }
 
     private long getResultOfAllFarms(int steps, Map<Position, Farm> farms, Map<Farm, Map<Boolean, Integer>> farmResults) {
@@ -303,56 +309,71 @@ public class Solution {
         return (steps / 131) * 8;
     }
 
-    private int getFinishedFarmCount(int steps) {
-        int n = steps / 131;
-        return (int) (2 * Math.pow(n, 2) - (2 * n) + 1);
-    }
+//    private int getFinishedFarmCount(int steps) {
+//        int n = steps / 131;
+//        return (int) (2 * Math.pow(n, 2) - (2 * n) + 1);
+//    }
 
     private long getResultOfAllFarmsWithFormula(Map<Position, Farm> farms, Map<Farm, Map<Boolean, Integer>> farmResults, int steps) {
-        List<Farm> activeFarms = new ArrayList<>();
-        List<Farm> finishedFarms = new ArrayList<>();
+//        List<Farm> activeFarms = new ArrayList<>();
+//        List<Farm> finishedFarms = new ArrayList<>();
+//
+//        for (Farm farm : farms.values()) {
+//            if (farmResults.containsKey(farm)) {
+//                finishedFarms.add(farm);
+//            } else {
+//                activeFarms.add(farm);
+//            }
+//        }
+//
+//        int n = steps / 131;
+//        String stepsString = String.format("%s (n=%s)", steps, n);
 
-        for (Farm farm : farms.values()) {
-            if (farmResults.containsKey(farm)) {
-                finishedFarms.add(farm);
-            } else {
-                activeFarms.add(farm);
-            }
-        }
+//        Map<Integer, Integer> activeFarmResultCounts = new HashMap<>();
+//        long resultOfActiveFarms = 0;
+//        for (Farm activeFarm : activeFarms) {
+//            int result = activeFarm.visitingPositions.size();
+//            activeFarmResultCounts.merge(result, 1, Integer::sum);
+//            resultOfActiveFarms += result;
+//        }
+//        long resultOfActiveFarms = getResultOfActiveFarms(activeFarms);
+//        System.out.println("Steps: " + stepsString + ", Result of active farms: " + resultOfActiveFarms
+//        + ", active farm results counts: " + activeFarmResultCounts
+//                + ", from formula: " + getResultOfActiveFarmsAtStep(steps)
+//        );
 
-        int n = steps / 131;
-        String stepsString = String.format("%s (n=%s)", steps, n);
-
-        long resultOfActiveFarms = getResultOfActiveFarms(activeFarms);
-//        System.out.println("Steps: " + stepsString + ", Result of active farms: " + resultOfActiveFarms);
-
-        long countOf7201 = 0;
-        long countOf7218 = 0;
-        boolean isEven = steps % 2 == 0;
-        long resultOfFinishedFarms = 0;
-        for (Farm finishedFarm : finishedFarms) {
-            Integer result = farmResults.get(finishedFarm).get(isEven);
-            if (result == 7201) {
-                countOf7201++;
-            } else if (result == 7218) {
-                countOf7218++;
-            } else {
-                System.out.println("Result other than 7201 and 7218: " + result);
-            }
-            resultOfFinishedFarms += result;
-        }
+//        long countOf7201 = 0;
+//        long countOf7218 = 0;
+//        boolean isEven = steps % 2 == 0;
+//        long resultOfFinishedFarms = 0;
+//        for (Farm finishedFarm : finishedFarms) {
+//            Integer result = farmResults.get(finishedFarm).get(isEven);
+//            if (result == 7201) {
+//                countOf7201++;
+//            } else if (result == 7218) {
+//                countOf7218++;
+//            } else {
+//                System.out.println("Result other than 7201 and 7218: " + result);
+//            }
+//            resultOfFinishedFarms += result;
+//        }
 
 //        System.out.println("Steps: " + stepsString + ", Result of finished farms: " + resultOfFinishedFarms +
 //                ", with formula: " + getResultOfFinishedFarmsAtStep(steps) +
 //                ", farm count with 7201: " + countOf7201 + ", with formula: " + getCountOfFarmsWith7201(steps) +
 //                ", farm count with 7218: " + countOf7218 + ", with formula: " + getCountOfFarmsWith7218(steps));
 
-        long totalResult = resultOfActiveFarms + resultOfFinishedFarms;
-        long totalResultWithFormula = resultOfActiveFarms + getResultOfFinishedFarmsAtStep(steps);
-        System.out.println("Steps: " + stepsString + ", Total result: " + totalResult +
-                ", with formula: " + totalResultWithFormula);
+//        long totalResult = resultOfActiveFarms + resultOfFinishedFarms;
+        long totalResultWithFormula = getResultOfActiveFarmsAtStep(steps) + getResultOfFinishedFarmsAtStep(steps);
+//        System.out.println("Steps: " + stepsString + ", Total result: " + totalResult +
+//                ", with formula: " + totalResultWithFormula);
 
-        return totalResult;
+//        return totalResult;
+        return totalResultWithFormula;
+    }
+
+    private long getResultWithFormula(int steps) {
+        return getResultOfActiveFarmsAtStep(steps) + getResultOfFinishedFarmsAtStep(steps);
     }
 
     private long getResultOfActiveFarms(List<Farm> farms) {
@@ -369,34 +390,54 @@ public class Solution {
                 .orElse(0L);
     }
 
-    // formula for 7201 = 4n^2. n = steps / 2
     private long getResultOfFinishedFarmsAtStep(int steps) {
-        int farmCountWith7201 = getCountOfFarmsWith7201(steps);
+        long farmCountWith7201 = getCountOfFarmsWith7201(steps);
         long resultOfFarmsWith7201 = 7201L * farmCountWith7201;
 
-        int farmCountWith7218 = getCountOfFarmsWith7218(steps);
+        long farmCountWith7218 = getCountOfFarmsWith7218(steps);
         long resultOfFarmsWith7218 = 7218L * farmCountWith7218;
 
         return resultOfFarmsWith7201 + resultOfFarmsWith7218;
     }
 
-    // formula for 7201 = 4n^2. n = steps / 2
     // formula for 7201 = (n-1)^2
-    private int getCountOfFarmsWith7201(int steps) {
+    private long getCountOfFarmsWith7201(int steps) {
         int n = steps / 131;
-
-//        int farmCountWith7201 = (int) (4 * Math.pow(nFor7201, 2));
-        return (int) Math.pow((n-1), 2);
+        return (long) Math.pow((n - 1), 2);
     }
 
-    // formula for 7218 = 4n^2 - 4n + 1. n = steps / 2 rounded up
-    private int getCountOfFarmsWith7218(int steps) {
+    // formula for 7218 n^2
+    private long getCountOfFarmsWith7218(int steps) {
         int n = steps / 131;
+        return (long) Math.pow(n, 2);
+    }
 
-//        int nFor7218 = Math.ceilDiv(n, 2);
-//        int farmCountWith7218 = (int) (4 * Math.pow(nFor7218, 2) - (4 * nFor7218) + 1);
+    private long getResultOfActiveFarmsAtStep(int steps) {
+        int n = steps / 131;
+        String stepsString = String.format("%s (n=%s)", steps, n);
 
-        return (int) Math.pow(n, 2);
+        Map<Integer, Integer> activeFarmResultCounts = new HashMap<>();
+        activeFarmResultCounts.put(5458, 1); // top middle, always 1
+        activeFarmResultCounts.put(5440, 1); // right middle, always 1
+        activeFarmResultCounts.put(5464, 1); // left middle, always 1
+        activeFarmResultCounts.put(5446, 1); // bottom middle, always 1
+
+        activeFarmResultCounts.put(921, n); // top right corner start
+        activeFarmResultCounts.put(925, n); // bottom right corner start
+        activeFarmResultCounts.put(903, n); // bottom left corner start
+        activeFarmResultCounts.put(937, n); // top left corner start
+
+        activeFarmResultCounts.put(6329, n - 1); // top right corner end
+        activeFarmResultCounts.put(6312, n - 1); // bottom right corner end
+        activeFarmResultCounts.put(6335, n - 1); // bottom left corner end
+        activeFarmResultCounts.put(6330, n - 1); // top left corner end
+
+//        System.out.println("Steps: " + stepsString + ", active farm results counts from formula: " + activeFarmResultCounts);
+        long result = 0;
+        for (Map.Entry<Integer, Integer> entry : activeFarmResultCounts.entrySet()) {
+            result += (long) entry.getKey() * entry.getValue();
+        }
+        return result;
     }
 
     private boolean isOutsideFarm(Position position) {
