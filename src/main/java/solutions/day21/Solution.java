@@ -71,12 +71,8 @@ public class Solution {
 
 //        int result2 = countPossiblePositionsAfterSteps2(new HashSet<>(gardenPositions), startingPosition, 982);
 //        System.out.println("Result of version 2: " + result2);
-//        long start = System.currentTimeMillis();
 //        long result3 = countPossiblePositionsAfterSteps3(new HashSet<>(gardenPositions), startingPosition, 982);
-//        long end = System.currentTimeMillis();
-//        long duration = Duration.ofMillis(end - start).toSeconds();
-//        System.out.println("Result of version 3: " + result3 + ", time taken: " + duration);
-//        return result3;
+//        System.out.println("Result of version 3: " + result3);
 
         return getResultWithFormula(26501365);
     }
@@ -268,22 +264,14 @@ public class Solution {
             }
             steps++;
 
-//            if (steps % 131 == 65) {
-//                int n = steps / 131;
-//                String stepsString = String.format("%s (n=%s)", steps, n);
-//                long resultOfCurrentStep = getResultOfAllFarms(steps, farms, farmResults);
-//                long resultOfCurrentStepWithFormula = getResultOfAllFarmsWithFormula(farms, farmResults, steps);
-//                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep
-//                        + ", with formula: " + resultOfCurrentStepWithFormula);
-//                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep +
-//                        ", active farm count: " + getActiveFarmCount(steps) +
-//                        ", finished farm count: " + getFinishedFarmCount(steps));
-
-//                System.out.println("Active farm count after " + stepsString + " steps: " + (farms.size() - farmResults.size()) +
-//                        ", Active farm formula result: " + getActiveFarmCount(steps));
-//                System.out.println("Finished farm count after " + stepsString + " steps: " + farmResults.size() +
-//                        ", Finished farm formula result: " + getFinishedFarmCount(steps));
-//            }
+            if (steps % 131 == 65) {
+                int n = steps / 131;
+                String stepsString = String.format("%s (n=%s)", steps, n);
+                long resultOfCurrentStep = getResultOfAllFarms(steps, farms, farmResults);
+                long resultOfCurrentStepWithFormula = getResultOfAllFarmsWithFormula(farms, farmResults, steps);
+                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep
+                        + ", with formula: " + resultOfCurrentStepWithFormula);
+            }
         }
 
 //        return getResultOfAllFarms(stepsToTake, farms, farmResults);
@@ -305,15 +293,10 @@ public class Solution {
         return result;
     }
 
-    private int getActiveFarmCount(int steps) {
-        return (steps / 131) * 8;
-    }
-
-//    private int getFinishedFarmCount(int steps) {
-//        int n = steps / 131;
-//        return (int) (2 * Math.pow(n, 2) - (2 * n) + 1);
-//    }
-
+    // analysis for finding the magic numbers
+    // numbers to find: possible results of finished farms (odd and even) and their counts at each step
+    // possible results of active farms (there are 12)
+    // compare the formula results with the actual results to validate
     private long getResultOfAllFarmsWithFormula(Map<Position, Farm> farms, Map<Farm, Map<Boolean, Integer>> farmResults, int steps) {
 //        List<Farm> activeFarms = new ArrayList<>();
 //        List<Farm> finishedFarms = new ArrayList<>();
@@ -374,20 +357,6 @@ public class Solution {
 
     private long getResultWithFormula(int steps) {
         return getResultOfActiveFarmsAtStep(steps) + getResultOfFinishedFarmsAtStep(steps);
-    }
-
-    private long getResultOfActiveFarms(List<Farm> farms) {
-        return farms.stream()
-                .map(farm -> (long) farm.visitingPositions.size())
-                .reduce(Long::sum)
-                .orElse(0L);
-    }
-
-    private long getResultOfFinishedFarms(List<Farm> farms, Map<Farm, Integer> farmResults) {
-        return farms.stream()
-                .map(farm -> (long) farmResults.get(farm))
-                .reduce(Long::sum)
-                .orElse(0L);
     }
 
     private long getResultOfFinishedFarmsAtStep(int steps) {
