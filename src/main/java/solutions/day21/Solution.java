@@ -3,6 +3,7 @@ package solutions.day21;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,10 +68,13 @@ public class Solution {
         ROW_COUNT = lines.size();
         COLUMN_COUNT = lines.getFirst().length();
 
-//        int result2 = countPossiblePositionsAfterSteps2(new HashSet<>(gardenPositions), startingPosition, 500);
+//        int result2 = countPossiblePositionsAfterSteps2(new HashSet<>(gardenPositions), startingPosition, 982);
 //        System.out.println("Result of version 2: " + result2);
-        long result3 = countPossiblePositionsAfterSteps3(new HashSet<>(gardenPositions), startingPosition, 1000);
-        System.out.println("Result of version 3: " + result3);
+        long start = System.currentTimeMillis();
+        long result3 = countPossiblePositionsAfterSteps3(new HashSet<>(gardenPositions), startingPosition, 982);
+        long end = System.currentTimeMillis();
+        long duration = Duration.ofMillis(end - start).toSeconds();
+        System.out.println("Result of version 3: " + result3 + ", time taken: " + duration);
         return result3;
     }
 
@@ -173,29 +177,18 @@ public class Solution {
                 newVisitingPositions.addAll(adjacentGardenPositions);
             }
 
-            int increaseInStep = newVisitingPositions.size() - visitingPositions.size();
             visitingPositions = newVisitingPositions;
             steps++;
-
-            int possiblePositionCount = visitingPositions.size();
-//            System.out.println("Possible positions after " + steps + " steps:" + possiblePositionCount + " Increase in step: " + increaseInStep);
+            if (steps % 131 == 65) {
+                int possiblePositionCount = visitingPositions.size();
+                System.out.println("Possible positions after " + steps + " steps:" + possiblePositionCount);
+            }
         }
-
-//        Set<Position> outsideFarm = visitingPositions.stream()
-//                .filter(this::isOutsideFarm)
-//                .collect(Collectors.toSet());
-//
-//        visitingPositions.removeAll(outsideFarm);
-
-//        System.out.println("Visiting positions of version 2 (outside): " + outsideFarm);
-//        System.out.println("Visiting positions of version 2 (inside): " + visitingPositions);
-//        return visitingPositions.size() + outsideFarm.size();
         return visitingPositions.size();
     }
 
     private long countPossiblePositionsAfterSteps3(Set<Position> gardenPositions, Position startingPosition, int stepsToTake) {
         Map<Position, Farm> farms = new HashMap<>();
-        Map<Integer, Long> stepResults = new HashMap<>();
 
         Position startingFarmPosition = new Position(0, 0);
         Set<Position> firstFarmVisitingPositions = new HashSet<>();
@@ -204,17 +197,13 @@ public class Solution {
         Farm startingFarm = new Farm(startingFarmPosition, firstFarmVisitingPositions, null);
         farms.put(startingFarmPosition, startingFarm);
 
-//        Set<Integer> possiblePositionCounts = new HashSet<>();
-//        boolean cycleStarted = false;
-//        Map<Boolean, Integer> results = new HashMap<>();
-
         Map<Farm, Map<Boolean, Integer>> farmResults = new HashMap<>();
 
         Map<Position, List<Position>> adjacentPositionsOfPosition = new HashMap<>();
 
         int steps = 0;
         while (steps < stepsToTake) {
-            List<Farm> newFarms = new ArrayList<>();
+            Set<Farm> newFarms = new HashSet<>();
             for (Farm currentFarm : farms.values()) {
                 if (farmResults.containsKey(currentFarm)) {
                     continue;
@@ -237,30 +226,20 @@ public class Solution {
 
                 for (Position positionOutside : positionsOutsideFarm) {
                     Position farmPosition = getFarmPosition(currentFarm, positionOutside);
-                    if (!farms.containsKey(farmPosition)) {
+                    if (!farms.containsKey(farmPosition) && newFarms.stream().noneMatch(farm -> farm.farmPosition.equals(farmPosition))) {
                         Set<Position> newFarmVisitingPositions = new HashSet<>();
                         newFarmVisitingPositions.add(getProjectedPosition(positionOutside));
                         Farm newFarm = new Farm(farmPosition, newFarmVisitingPositions, currentFarm);
                         newFarms.add(newFarm);
 
 //                        System.out.println("New farm created: " + newFarm);
-                    } /*else {
-                        Farm farm = farms.get(farmPosition);
-                        if (!farm.equals(currentFarm.parentFarm)) {
-                            farm.visitingPositions.add(getProjectedPosition(positionOutside));
-                        }
-                    }*/
+                    }
                 }
-
                 newVisitingPositions.removeAll(positionsOutsideFarm);
 
-//                int increaseInStep = newVisitingPositions.size() - visitingPositions.size();
                 currentFarm.visitingPositions = newVisitingPositions;
 
                 int possiblePositionCount = currentFarm.visitingPositions.size();
-//                System.out.println("Farm: " + currentFarm.farmPosition + ", possible visitingPositions after " + (steps + 1) + " steps:"
-//                        + possiblePositionCount + " Increase in step: " + increaseInStep);
-
                 // cycle detection
                 if (currentFarm.possiblePositionCounts.contains(possiblePositionCount)) {
                     // cycle starts
@@ -268,11 +247,8 @@ public class Solution {
                     currentFarm.results.put(isEven, possiblePositionCount);
                     if (currentFarm.cycleStarted) {
                         // have both results in the map now
-//                        System.out.println("Cycle end found, results for isEven: " + currentFarm.results);
-//                        return results.get(isEven);
                         farmResults.put(currentFarm, currentFarm.results);
                     } else {
-//                        System.out.println("Possible cycle start found at step: " + steps);
                         currentFarm.cycleStarted = true;
                     }
                 } else {
@@ -285,40 +261,24 @@ public class Solution {
             for (Farm newFarm : newFarms) {
                 farms.put(newFarm.farmPosition, newFarm);
             }
-//            long currentCount = 0;
-//            for (Farm farm : farms.values()) {
-//                currentCount += farm.visitingPositions.size();
-//            }
             steps++;
-//            long resultOfCurrentStep = getResultOfAllFarms(steps, farms, farmResults);
-//            stepResults.put(steps, resultOfCurrentStep);
-//            long resultOfPreviousStep = stepResults.getOrDefault(steps - 1, 0L);
-//            System.out.println("Total possible visitingPositions count after " + steps + " steps:" +
-//                    resultOfCurrentStep + ", increase from previous: " +
-//                    (resultOfCurrentStep - resultOfPreviousStep));
-            if (steps % 100 == 0) {
+
+            if (steps % 131 == 65) {
+                int n = steps / 131;
+                String stepsString = String.format("%s (n=%s)", steps, n);
                 long resultOfCurrentStep = getResultOfAllFarms(steps, farms, farmResults);
-                System.out.println("Total possible visitingPositions count after " + steps + " steps:" +
-                    resultOfCurrentStep);
+//                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep +
+//                        ", active farm count: " + getActiveFarmCount(steps) +
+//                        ", finished farm count: " + getFinishedFarmCount(steps));
+
+//                System.out.println("Active farm count after " + stepsString + " steps: " + (farms.size() - farmResults.size()) +
+//                        ", Active farm formula result: " + getActiveFarmCount(steps));
+//                System.out.println("Finished farm count after " + stepsString + " steps: " + farmResults.size() +
+//                        ", Finished farm formula result: " + getFinishedFarmCount(steps));
             }
         }
 
-//        Set<Position> visitingPositionsToPrint = new HashSet<>();
-//        for (Farm farm : farms.values()) {
-//            int rowDelta = farm.farmPosition.row * ROW_COUNT;
-//            int columnDelta = farm.farmPosition.column * COLUMN_COUNT;
-//            Set<Position> visitingPositionsOfFarm = new HashSet<>();
-//            for (Position visitingPosition : farm.visitingPositions) {
-//                Position positionWithDelta = new Position(visitingPosition.row + rowDelta, visitingPosition.column + columnDelta);
-//                visitingPositionsToPrint.add(positionWithDelta);
-//                visitingPositionsOfFarm.add(positionWithDelta);
-//            }
-//            System.out.println("Visiting positions of farm " + farm.farmPosition + " : " + visitingPositionsOfFarm);
-//        }
-//        System.out.println("Visiting positions of version 3:" + visitingPositionsToPrint);
-
-        long result = getResultOfAllFarms(stepsToTake, farms, farmResults);
-        return result;
+        return getResultOfAllFarms(stepsToTake, farms, farmResults);
     }
 
     private long getResultOfAllFarms(int steps, Map<Position, Farm> farms, Map<Farm, Map<Boolean, Integer>> farmResults) {
@@ -334,6 +294,15 @@ public class Solution {
             }
         }
         return result;
+    }
+
+    private int getActiveFarmCount(int steps) {
+        return (steps / 131) * 8;
+    }
+
+    private int getFinishedFarmCount(int steps) {
+        int n = steps / 131;
+        return (int) (2 * Math.pow(n, 2) - (2 * n) + 1);
     }
 
     private boolean isOutsideFarm(Position position) {
@@ -381,42 +350,11 @@ public class Solution {
         return newFarmPosition;
     }
 
-//    private void printVisitingPositions(Set<Position> newVisitingPositions, Set<Position> gardenPositions) {
-//        int minRow = Integer.MAX_VALUE;
-//        int maxRow = Integer.MIN_VALUE;
-//        int minColumn = Integer.MAX_VALUE;
-//        int maxColumn = Integer.MIN_VALUE;
-//
-//        for (Position newVisitingPosition : newVisitingPositions) {
-//            minRow = Math.min(minRow, newVisitingPosition.row);
-//            maxRow = Math.max(maxRow, newVisitingPosition.row);
-//            minColumn = Math.min(minColumn, newVisitingPosition.column);
-//            maxColumn = Math.max(maxColumn, newVisitingPosition.column);
-//        }
-//
-//        for (int row = minRow; row <= maxRow; row++) {
-//            for (int column = minColumn; column <= maxColumn; column++) {
-//                Position position = new Position(row, column);
-//                if (isOutsideInitialGarden(position)) {
-//                    position = getProjectedPosition(position);
-//                }
-//                char charToPrint = '#';
-//                if (newVisitingPositions.contains(position)) {
-//                    charToPrint = 'O';
-//                } else if (gardenPositions.contains(position)) {
-//                    charToPrint = '.';
-//                }
-//                System.out.print(charToPrint);
-//            }
-//            System.out.println();
-//        }
-//    }
-
     public static void main(String[] args) throws IOException {
         Solution solution = new Solution();
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day21.txt"));
-        System.out.println(solution.getSolution(lines));
+//        System.out.println(solution.getSolution(lines));
         System.out.println(solution.getSolution2(lines));
     }
 }
