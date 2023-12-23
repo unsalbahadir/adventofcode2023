@@ -26,9 +26,26 @@ public class Solution {
         MAX_ROW = grid.length;
         MAX_COLUMN = grid[0].length;
 
-        HashSet<Position> visitedPositions = new HashSet<>();
-        visitedPositions.add(startingPosition);
-        return findLongestHikeToEnd(grid, startingPosition, endPosition, visitedPositions);
+        return findLongestHikeToEnd(grid, startingPosition, endPosition, new HashSet<>());
+    }
+    public int getSolution2(List<String> lines) {
+        char[][] grid = convertToGrid(lines);
+        Set<Character> slopes = Set.of('^', '>', 'v', '<');
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
+                if (slopes.contains(grid[i][j])) {
+                    grid[i][j] = '.';
+                }
+            }
+        }
+
+        Position startingPosition = getStartingPosition(grid);
+        Position endPosition = getEndPosition(grid);
+
+        MAX_ROW = grid.length;
+        MAX_COLUMN = grid[0].length;
+
+        return findLongestHikeToEnd(grid, startingPosition, endPosition, new HashSet<>());
     }
 
     private char[][] convertToGrid(List<String> lines) {
@@ -115,6 +132,7 @@ public class Solution {
         Solution solution = new Solution();
 
         List<String> lines = Files.readAllLines(Paths.get("inputs/day23.txt"));
-        System.out.println(solution.getSolution(lines));
+//        System.out.println(solution.getSolution(lines));
+        System.out.println(solution.getSolution2(lines));
     }
 }
