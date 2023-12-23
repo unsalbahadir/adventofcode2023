@@ -266,7 +266,10 @@ public class Solution {
             if (steps % 131 == 65) {
                 int n = steps / 131;
                 String stepsString = String.format("%s (n=%s)", steps, n);
-                long resultOfCurrentStep = getResultOfAllFarms(steps, farms, farmResults);
+//                long resultOfCurrentStep = getResultOfAllFarms(steps, farms, farmResults);
+                long resultOfCurrentStepWithFormula = getResultOfAllFarmsWithFormula(farms, farmResults, steps);
+//                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep +
+//                        ", with formula: " +
 //                System.out.println("Possible positions after " + stepsString + " steps: " + resultOfCurrentStep +
 //                        ", active farm count: " + getActiveFarmCount(steps) +
 //                        ", finished farm count: " + getFinishedFarmCount(steps));
@@ -303,6 +306,97 @@ public class Solution {
     private int getFinishedFarmCount(int steps) {
         int n = steps / 131;
         return (int) (2 * Math.pow(n, 2) - (2 * n) + 1);
+    }
+
+    private long getResultOfAllFarmsWithFormula(Map<Position, Farm> farms, Map<Farm, Map<Boolean, Integer>> farmResults, int steps) {
+        List<Farm> activeFarms = new ArrayList<>();
+        List<Farm> finishedFarms = new ArrayList<>();
+
+        for (Farm farm : farms.values()) {
+            if (farmResults.containsKey(farm)) {
+                finishedFarms.add(farm);
+            } else {
+                activeFarms.add(farm);
+            }
+        }
+
+        int n = steps / 131;
+        String stepsString = String.format("%s (n=%s)", steps, n);
+
+        long resultOfActiveFarms = getResultOfActiveFarms(activeFarms);
+//        System.out.println("Steps: " + stepsString + ", Result of active farms: " + resultOfActiveFarms);
+
+        long countOf7201 = 0;
+        long countOf7218 = 0;
+        boolean isEven = steps % 2 == 0;
+        long resultOfFinishedFarms = 0;
+        for (Farm finishedFarm : finishedFarms) {
+            Integer result = farmResults.get(finishedFarm).get(isEven);
+            if (result == 7201) {
+                countOf7201++;
+            } else if (result == 7218) {
+                countOf7218++;
+            } else {
+                System.out.println("Result other than 7201 and 7218: " + result);
+            }
+            resultOfFinishedFarms += result;
+        }
+
+//        System.out.println("Steps: " + stepsString + ", Result of finished farms: " + resultOfFinishedFarms +
+//                ", with formula: " + getResultOfFinishedFarmsAtStep(steps) +
+//                ", farm count with 7201: " + countOf7201 + ", with formula: " + getCountOfFarmsWith7201(steps) +
+//                ", farm count with 7218: " + countOf7218 + ", with formula: " + getCountOfFarmsWith7218(steps));
+
+        long totalResult = resultOfActiveFarms + resultOfFinishedFarms;
+        long totalResultWithFormula = resultOfActiveFarms + getResultOfFinishedFarmsAtStep(steps);
+        System.out.println("Steps: " + stepsString + ", Total result: " + totalResult +
+                ", with formula: " + totalResultWithFormula);
+
+        return totalResult;
+    }
+
+    private long getResultOfActiveFarms(List<Farm> farms) {
+        return farms.stream()
+                .map(farm -> (long) farm.visitingPositions.size())
+                .reduce(Long::sum)
+                .orElse(0L);
+    }
+
+    private long getResultOfFinishedFarms(List<Farm> farms, Map<Farm, Integer> farmResults) {
+        return farms.stream()
+                .map(farm -> (long) farmResults.get(farm))
+                .reduce(Long::sum)
+                .orElse(0L);
+    }
+
+    // formula for 7201 = 4n^2. n = steps / 2
+    private long getResultOfFinishedFarmsAtStep(int steps) {
+        int farmCountWith7201 = getCountOfFarmsWith7201(steps);
+        long resultOfFarmsWith7201 = 7201L * farmCountWith7201;
+
+        int farmCountWith7218 = getCountOfFarmsWith7218(steps);
+        long resultOfFarmsWith7218 = 7218L * farmCountWith7218;
+
+        return resultOfFarmsWith7201 + resultOfFarmsWith7218;
+    }
+
+    // formula for 7201 = 4n^2. n = steps / 2
+    // formula for 7201 = (n-1)^2
+    private int getCountOfFarmsWith7201(int steps) {
+        int n = steps / 131;
+
+//        int farmCountWith7201 = (int) (4 * Math.pow(nFor7201, 2));
+        return (int) Math.pow((n-1), 2);
+    }
+
+    // formula for 7218 = 4n^2 - 4n + 1. n = steps / 2 rounded up
+    private int getCountOfFarmsWith7218(int steps) {
+        int n = steps / 131;
+
+//        int nFor7218 = Math.ceilDiv(n, 2);
+//        int farmCountWith7218 = (int) (4 * Math.pow(nFor7218, 2) - (4 * nFor7218) + 1);
+
+        return (int) Math.pow(n, 2);
     }
 
     private boolean isOutsideFarm(Position position) {
