@@ -24,14 +24,14 @@ public class Solution {
     }
 
     private static final class Hailstone {
-        javax.swing.text.Position position;
+        Position position;
         Velocity velocity;
 
         // line equation: y = m*x + b
         double m;
         double b;
 
-        private Hailstone(javax.swing.text.Position position, Velocity velocity) {
+        private Hailstone(Position position, Velocity velocity) {
             this.position = position;
             this.velocity = velocity;
             m = velocity.y / velocity.x;
